@@ -58,6 +58,38 @@ function FeedtanApp(initialData) {
     amlAlerts: initialData.amlAlerts || [],
     activeSessions: initialData.activeSessions || [],
     systemSettings: initialData.systemSettings || {},
+
+    // Accounting & Finance
+    ledgerEntries: [
+      { code: '1000', name: 'Cash at Hand', cat: 'Asset', debit: 4200000, credit: 0, balance: 4200000 },
+      { code: '1100', name: 'Bank Account - CRDB', cat: 'Asset', debit: 125800000, credit: 0, balance: 125800000 },
+      { code: '1200', name: 'Loan Portfolio', cat: 'Asset', debit: 5420000000, credit: 0, balance: 5420000000 },
+      { code: '2000', name: 'Member Savings', cat: 'Liability', debit: 0, credit: 3820000000, balance: -3820000000 },
+      { code: '3000', name: 'Interest Income', cat: 'Income', debit: 0, credit: 450000000, balance: -450000000 },
+      { code: '4000', name: 'Office Expenses', cat: 'Expense', debit: 12000000, credit: 0, balance: 12000000 },
+    ],
+    cashbookEntries: [
+      { id: 1, date: '2026-05-24', ref: 'CB-99281', desc: 'Loan Repayment - John Doe', cat: 'Loan Inflow', in: 150000, out: 0, balance: 4200000 },
+      { id: 2, date: '2026-05-24', ref: 'CB-99280', desc: 'Office Supplies', cat: 'Expense', in: 0, out: 45000, balance: 4050000 },
+    ],
+    journalEntries: [],
+    incomeEntries: [],
+    expenseEntries: [],
+    bankRecItems: [],
+    trialBalanceItems: [],
+
+    // Loans Management
+    loanRepayments: [],
+    approvalRequests: [],
+    collateralItems: [],
+    guarantorItems: [],
+    penaltyLogs: [],
+    restructuringLogs: [],
+    refinancingLogs: [],
+    writeOffLogs: [],
+    loanProducts: [],
+    interestRules: [],
+
     bulkSmsForm: { group: 'All Members', message: '' },
     marketingForm: { name: '', target: 'All', content: '' },
     receiptSettings: initialData.systemSettings.receipts || { logo: '', footer: '' },
@@ -539,8 +571,6 @@ function FeedtanApp(initialData) {
 
     sidebarSections: {
       admin: [
-        { id:'dashboard', icon:'fa-solid fa-gauge-high', label:'Dashboard', route: '/dashboard' },
-        
         // Members Module
         { id:'members-section', items:[
             { id:'members', icon:'fa-solid fa-users', label:'Members', children:[
@@ -680,7 +710,6 @@ function FeedtanApp(initialData) {
         ] },
       ],
       member: [
-        { id:'dashboard', icon:'fa-solid fa-gauge-high', label:'Dashboard', route: '/dashboard' },
         { id:'savings-section', items:[
             { id:'savings', icon:'fa-solid fa-piggy-bank', label:'Savings', children:[
               {id:'savings-accounts',label:'My Accounts', route: '/savings/accounts'},
