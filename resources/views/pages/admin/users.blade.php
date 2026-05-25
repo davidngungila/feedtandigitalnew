@@ -7,7 +7,7 @@
 <div class="animate-[fadeIn_0.4s_ease] space-y-4">
   <div class="flex items-center justify-between">
     <h2 class="text-lg font-bold" :class="darkMode?'text-white':'text-primary-900'">System Users</h2>
-    <button @click="showModal('addUser')" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold transition-all">
+    <button @click="userForm = { id: null, name: '', email: '', password: '', role: 'member', branch: '', phone: '', is_active: true }; showModal('addUser')" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold transition-all">
       <i class="fa-solid fa-plus"></i> Add User
     </button>
   </div>
@@ -30,13 +30,14 @@
                   </div>
                 </div>
               </td>
-              <td><span class="role-tag" :class="'role-'+u.role" x-text="u.roleLabel"></span></td>
-              <td class="text-[11px]" :class="darkMode?'text-primary-400':'text-gray-500'" x-text="u.lastLogin"></td>
-              <td><span class="badge" :class="u.active?'badge-green':'badge-red'" x-text="u.active?'Active':'Inactive'"></span></td>
+              <td><span class="role-tag" :class="'role-'+u.role" x-text="u.role_label"></span></td>
+              <td class="text-[11px]" :class="darkMode?'text-primary-400':'text-gray-500'" x-text="u.last_login"></td>
+              <td><span class="badge" :class="u.is_active?'badge-green':'badge-red'" x-text="u.is_active?'Active':'Inactive'"></span></td>
               <td>
                 <div class="flex gap-1">
-                  <button class="p-1.5 rounded-lg text-blue-500 text-[11px] hover:bg-blue-900/20 transition-colors"><i class="fa-solid fa-pen"></i></button>
-                  <button class="p-1.5 rounded-lg text-red-500 text-[11px] hover:bg-red-900/20 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                  <button @click="viewUserDetails(u)" class="p-1.5 rounded-lg text-primary-500 text-[11px] hover:bg-primary-900/20 transition-colors" title="View Details"><i class="fa-solid fa-eye"></i></button>
+                  <button @click="userForm = {...u}; showModal('addUser')" class="p-1.5 rounded-lg text-blue-500 text-[11px] hover:bg-blue-900/20 transition-colors" title="Edit User"><i class="fa-solid fa-pen"></i></button>
+                  <button @click="deleteUser(u.id)" class="p-1.5 rounded-lg text-red-500 text-[11px] hover:bg-red-900/20 transition-colors" title="Delete User"><i class="fa-solid fa-trash"></i></button>
                 </div>
               </td>
             </tr>

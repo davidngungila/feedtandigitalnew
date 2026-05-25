@@ -36,7 +36,7 @@
   </div>
 
   <!-- Navigation -->
-  <nav class="flex-1 min-h-0 overflow-y-scroll py-3 px-2 space-y-0.5">
+  <nav id="sidebar-nav" class="flex-1 min-h-0 overflow-y-scroll py-3 px-2 space-y-0.5">
 
     <!-- Dashboard -->
     <template x-if="hasAccess('dashboard')">
@@ -93,11 +93,4 @@
     </template>
   </nav>
 
-  <!-- Sidebar Footer / Logout -->
-  <div class="p-3 border-t border-primary-800/50 flex-shrink-0">
-    <button @click="logout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-primary-300 hover:bg-red-900/40 hover:text-red-400 transition-all duration-150">
-      <i class="fa-solid fa-right-from-bracket w-4 text-center flex-shrink-0"></i>
-      <span x-show="!sidebarCollapsed" class="font-medium">Logout</span>
-    </button>
-  </div>
 </aside>

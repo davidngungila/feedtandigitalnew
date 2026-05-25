@@ -5,7 +5,12 @@
      SETTINGS PAGE
      ============================================================ -->
 <div class="animate-[fadeIn_0.4s_ease] space-y-4">
-  <h2 class="text-lg font-bold" :class="darkMode?'text-white':'text-primary-900'">System Settings</h2>
+  <div class="flex items-center justify-between">
+    <h2 class="text-lg font-bold" :class="darkMode?'text-white':'text-primary-900'">System Settings</h2>
+    <button @click="saveSettings()" class="px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-xs font-semibold transition-all">
+      Save All Changes
+    </button>
+  </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
     <!-- General Settings -->
@@ -15,23 +20,24 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Organization Name</label>
-            <input type="text" value="FeedTan Community Microfinance Group" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
+            <input type="text" x-model="settingsForm.org_name" placeholder="FeedTan Community Microfinance Group" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
           </div>
           <div>
             <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Registration No.</label>
-            <input type="text" value="GMS/DSM/2018/001234" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
+            <input type="text" x-model="settingsForm.reg_no" placeholder="GMS/DSM/2018/001234" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
           </div>
           <div>
             <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Default Currency</label>
-            <select class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'">
-              <option selected>TZS – Tanzanian Shilling</option>
-              <option>USD – US Dollar</option>
+            <select x-model="settingsForm.currency" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'">
+              <option value="TZS">TZS – Tanzanian Shilling</option>
+              <option value="USD">USD – US Dollar</option>
             </select>
           </div>
           <div>
             <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Fiscal Year Start</label>
-            <select class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'">
-              <option>January</option><option>July</option>
+            <select x-model="settingsForm.fiscal_start" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'">
+              <option value="January">January</option>
+              <option value="July">July</option>
             </select>
           </div>
         </div>
@@ -41,16 +47,16 @@
         <h3 class="font-bold text-sm mb-4" :class="darkMode?'text-primary-200':'text-primary-800'">Loan Configuration</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Default Interest Rate</label>
-            <input type="number" value="18" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
+            <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Default Interest Rate (%)</label>
+            <input type="number" x-model="settingsForm.loan_interest" placeholder="18" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
           </div>
           <div>
             <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Processing Fee (%)</label>
-            <input type="number" value="1" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
+            <input type="number" x-model="settingsForm.loan_processing_fee" placeholder="1" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
           </div>
           <div>
             <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Penalty Rate (%)</label>
-            <input type="number" value="5" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
+            <input type="number" x-model="settingsForm.loan_penalty_rate" placeholder="5" class="form-input input-field" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/>
           </div>
         </div>
       </div>

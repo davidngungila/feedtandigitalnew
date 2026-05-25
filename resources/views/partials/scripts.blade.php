@@ -52,6 +52,423 @@ function FeedtanApp(initialData) {
     memberLoan: (initialData.memberLoans && initialData.memberLoans.length > 0) ? initialData.memberLoans[0] : null,
     memberTransactions: initialData.memberTransactions || [],
     auditLogs: initialData.auditLogs || [],
+    failedLogins: initialData.failedLogins || [],
+    ipRestrictions: initialData.ipRestrictions || [],
+    kycVerifications: initialData.kycVerifications || [],
+    amlAlerts: initialData.amlAlerts || [],
+    activeSessions: initialData.activeSessions || [],
+    systemSettings: initialData.systemSettings || {},
+    bulkSmsForm: { group: 'All Members', message: '' },
+    marketingForm: { name: '', target: 'All', content: '' },
+    receiptSettings: initialData.systemSettings.receipts || { logo: '', footer: '' },
+    otpSettings: initialData.systemSettings.otp || { sms: true, email: true, app: true, expiry: 10, retries: 3, length: 6 },
+    reminders: initialData.systemSettings.reminders || [],
+    userForm: { id: null, name: '', email: '', password: '', role: 'member', branch: '', phone: '', is_active: true },
+    ipForm: { label: '', ip_address: '' },
+    kycUpdateForm: { id: null, status: 'Approved', notes: '' },
+    amlUpdateForm: { id: null, status: 'Resolved' },
+    settingsForm: {},
+    securityForm: {},
+    commSettingsForm: { email: {}, sms: {} },
+    commTab: 'email',
+    tfaSetupData: { secret: '', backup_codes: [] },
+    
+    getQrCodeUrl() {
+      if (!this.tfaSetupData.secret) return '';
+      const issuer = 'FeedTanDigital';
+      const label = this.currentUser.email || 'user';
+      const secret = this.tfaSetupData.secret;
+      const otpauth = `otpauth://totp/${issuer}:${label}?secret=${secret}&issuer=${issuer}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauth)}`;
+    },
+
+    passwordForm: { current_password: '', password: '', password_confirmation: '' },
+    selectedUser: null,
+    selectedUserLogs: [],
+
+    async viewUserDetails(user) {
+      this.selectedUser = user;
+      this.selectedUserLogs = [];
+      this.showModal('userDetails');
+      
+      try {
+        const response = await fetch(`/admin/users/${user.id}/logs`);
+        const result = await response.json();
+        if (result.success) {
+          this.selectedUserLogs = result.logs;
+        }
+      } catch (e) {
+        console.error('Error fetching user logs', e);
+      }
+    },
+
+    initSettings() {
+      // Initialize settingsForm from systemSettings
+      if (this.systemSettings.general) {
+        this.systemSettings.general.forEach(s => {
+          this.settingsForm[s.key] = s.value;
+        });
+      }
+      if (this.systemSettings.security) {
+        this.systemSettings.security.forEach(s => {
+          this.securityForm[s.key] = s.value;
+        });
+      }
+      if (this.systemSettings.email) {
+        this.systemSettings.email.forEach(s => {
+          this.commSettingsForm.email[s.key] = s.value;
+        });
+      }
+      if (this.systemSettings.sms) {
+        this.systemSettings.sms.forEach(s => {
+          this.commSettingsForm.sms[s.key] = s.value;
+        });
+      }
+    },
+
+    async saveUser() {
+      const isEdit = !!this.userForm.id;
+      const url = isEdit ? `/admin/users/${this.userForm.id}` : '/admin/users';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.userForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          if (isEdit) {
+            const idx = this.systemUsers.findIndex(u => u.id === result.user.id);
+            if (idx !== -1) this.systemUsers[idx] = result.user;
+          } else {
+            this.systemUsers.push(result.user);
+          }
+          this.activeModal = null;
+          this.showToast(`User ${isEdit ? 'updated' : 'created'} successfully`, 'success');
+        } else {
+          this.showToast(result.message || 'Error saving user', 'error');
+        }
+      } catch (e) {
+        this.showToast('Server error occurred', 'error');
+      }
+    },
+
+    async deleteUser(id) {
+      if (!confirm('Are you sure you want to delete this user?')) return;
+      try {
+        const response = await fetch(`/admin/users/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.systemUsers = this.systemUsers.filter(u => u.id !== id);
+          this.showToast('User deleted successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error deleting user', 'error');
+      }
+    },
+
+    async saveSettings() {
+      try {
+        const response = await fetch('/settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.settingsForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.showToast('Settings saved successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error saving settings', 'error');
+      }
+    },
+
+    async saveSecurity() {
+      try {
+        const response = await fetch('/security', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.securityForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.showToast('Security settings saved successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error saving security settings', 'error');
+      }
+    },
+
+    async saveCommSettings(group) {
+      try {
+        const response = await fetch('/admin/comm-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({
+            group: group,
+            settings: this.commSettingsForm[group]
+          })
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.showToast('Communication settings updated', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error updating communication settings', 'error');
+      }
+    },
+
+    async sendBulkSms() {
+      try {
+        const response = await fetch('/admin/bulk-sms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.bulkSmsForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.showToast('Bulk SMS campaign initiated', 'success');
+          this.bulkSmsForm.message = '';
+        }
+      } catch (e) {
+        this.showToast('Error sending bulk SMS', 'error');
+      }
+    },
+
+    async saveReceiptSettings() {
+      try {
+        const response = await fetch('/admin/receipts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.receiptSettings)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.showToast('Receipt settings updated', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error updating receipt settings', 'error');
+      }
+    },
+
+    async saveOtpSettings() {
+      try {
+        const response = await fetch('/admin/otp-settings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.otpSettings)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.showToast('OTP settings updated', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error updating OTP settings', 'error');
+      }
+    },
+
+    async changePassword() {
+      try {
+        const response = await fetch('/security/password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.passwordForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.passwordForm = { current_password: '', password: '', password_confirmation: '' };
+          this.showToast('Password changed successfully', 'success');
+        } else {
+          this.showToast(result.message || 'Error changing password', 'error');
+        }
+      } catch (e) {
+        this.showToast('Error changing password', 'error');
+      }
+    },
+
+    async toggle2FA(type, currentStatus) {
+      try {
+        const response = await fetch('/security/2fa', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({
+            type: type,
+            enabled: !currentStatus
+          })
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.currentUser = result.user;
+          this.showToast(result.message, 'success');
+          
+          if (type === 'authenticator' && !currentStatus) {
+            this.tfaSetupData = {
+              secret: result.secret,
+              backup_codes: result.backup_codes
+            };
+            this.showModal('tfaSetup');
+          }
+        }
+      } catch (e) {
+        this.showToast('Error updating 2FA settings', 'error');
+      }
+    },
+
+    async saveIpRestriction() {
+      try {
+        const response = await fetch('/admin/ip-restrictions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.ipForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.ipRestrictions.push(result.restriction);
+          this.ipForm = { label: '', ip_address: '' };
+          this.showToast('IP restriction added successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error adding IP restriction', 'error');
+      }
+    },
+
+    async deleteIpRestriction(id) {
+      if (!confirm('Are you sure you want to remove this IP restriction?')) return;
+      try {
+        const response = await fetch(`/admin/ip-restrictions/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.ipRestrictions = this.ipRestrictions.filter(r => r.id !== id);
+          this.showToast('IP restriction removed', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error removing IP restriction', 'error');
+      }
+    },
+
+    async updateKycStatus() {
+      try {
+        const response = await fetch(`/admin/kyc/${this.kycUpdateForm.id}/status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.kycUpdateForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          const idx = this.kycVerifications.findIndex(k => k.id === result.kyc.id);
+          if (idx !== -1) this.kycVerifications[idx] = result.kyc;
+          this.activeModal = null;
+          this.showToast('KYC status updated', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error updating KYC status', 'error');
+      }
+    },
+
+    async updateAmlStatus(alertId, status) {
+      try {
+        const response = await fetch(`/admin/aml/${alertId}/status`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ status: status })
+        });
+        const result = await response.json();
+        if (result.success) {
+          const idx = this.amlAlerts.findIndex(a => a.id === result.alert.id);
+          if (idx !== -1) this.amlAlerts[idx] = result.alert;
+          this.showToast('AML status updated', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error updating AML status', 'error');
+      }
+    },
+
+    async terminateSession(id) {
+      if (!confirm('Are you sure you want to terminate this session?')) return;
+      try {
+        const response = await fetch(`/admin/sessions/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.activeSessions = this.activeSessions.filter(s => s.id !== id);
+          this.showToast('Session terminated', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error terminating session', 'error');
+      }
+    },
+
+    async terminateAllSessions() {
+      if (!confirm('Are you sure you want to terminate all other sessions?')) return;
+      try {
+        const response = await fetch('/admin/sessions/terminate-all', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          const myId = this.currentUser.id;
+          this.activeSessions = this.activeSessions.filter(s => s.user_id === myId);
+          this.showToast('All other sessions terminated', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error terminating sessions', 'error');
+      }
+    },
     notifications: [
       { id:1, title:'Loan Approved', message:'Member Amina Salim has been approved for TZS 5M', type:'loan', icon:'fa-solid fa-check-circle', time:'2 mins ago', unread:true },
       { id:2, title:'New Deposit', message:'Received TZS 150,000 from M-Pesa ref: QW789...', type:'deposit', icon:'fa-solid fa-arrow-down', time:'15 mins ago', unread:true },
@@ -123,69 +540,144 @@ function FeedtanApp(initialData) {
     sidebarSections: {
       admin: [
         { id:'dashboard', icon:'fa-solid fa-gauge-high', label:'Dashboard', route: '/dashboard' },
+        
+        // Members Module
         { id:'members-section', items:[
             { id:'members', icon:'fa-solid fa-users', label:'Members', children:[
-              {id:'members-active',label:'Active Members', route: '/members/active'},
-              {id:'member-register',label:'Register Member', route: '/members/register'},
-              {id:'members-stmt',label:'Member Statements', route: '/members/statements'},
+              {id:'members-active',label:'All Members', route: '/members/active'},
+              {id:'member-register',label:'Add Member', route: '/members/register'},
+              {id:'members-groups',label:'Groups', route: '/members/groups'},
+              {id:'members-guarantors',label:'Guarantors', route: '/members/guarantors'},
+              {id:'admin-kyc',label:'KYC Verification', route: '/admin/kyc'},
+              {id:'members-accounts',label:'Member Accounts', route: '/members/active'},
+              {id:'members-docs',label:'Documents', route: '/members/documents'},
+              {id:'reports-members',label:'Member Reports', route: '/reports/members'},
+              {id:'members-blacklisted',label:'Blacklisted Members', route: '/members/blacklisted'},
             ]},
           ]
         },
-        { id:'savings-section', items:[
-            { id:'savings', icon:'fa-solid fa-piggy-bank', label:'Savings', children:[
-              {id:'savings-plans',label:'Saving Plans', route: '/savings/plans'},
-              {id:'savings-deposit',label:'Deposit Money', route: '/savings/deposit'},
-              {id:'savings-accounts',label:'Savings Accounts', route: '/savings/accounts'},
-            ]},
-          ]
-        },
+
+        // Loan Management Module
         { id:'loans-section', items:[
-            { id:'loans', icon:'fa-solid fa-hand-holding-dollar', label:'Loans', children:[
-              {id:'loan-apply',label:'Apply Loan', route: '/loans/apply'},
-              {id:'loan-active',label:'Active Loans', route: '/loans/active'},
-              {id:'loan-repayments',label:'Loan Repayments', route: '/loans/repayments'},
+            { id:'loans', icon:'fa-solid fa-hand-holding-dollar', label:'Loan Management', children:[
+              {id:'loan-apply',label:'Loan applications', route: '/loans/apply'},
+              {id:'loan-approval',label:'Loan approval workflow', route: '/loans/approval-workflow'},
+              {id:'loan-guarantors',label:'Guarantor management', route: '/loans/guarantor-mgmt'},
+              {id:'loan-active',label:'Loan disbursement', route: '/loans/active'},
+              {id:'loan-repayments',label:'Repayment schedules', route: '/loans/repayments'},
+              {id:'loan-penalty',label:'Penalty calculations', route: '/loans/penalty-calc'},
+              {id:'loan-restructure',label:'Loan restructuring', route: '/loans/restructuring'},
+              {id:'loan-refinance',label:'Loan refinancing', route: '/loans/refinancing'},
+              {id:'loan-writeoffs',label:'Loan write-offs', route: '/loans/write-offs'},
+              {id:'loan-products',label:'Loan products setup', route: '/loans/products-setup'},
+              {id:'loan-interest',label:'Interest configuration', route: '/loans/interest-config'},
+              {id:'loan-collateral',label:'Collateral management', route: '/loans/collateral-mgmt'},
             ]},
           ]
         },
-        { id:'payments-section', items:[
-            { id:'payments', icon:'fa-solid fa-mobile-screen-button', label:'Mobile Payments', children:[
-              {id:'payments-mpesa',label:'M-Pesa', route: '/payments/mpesa'},
-              {id:'payments-mobile',label:'Mobile Money', route: '/payments/mobile'},
+
+        // Accounting & Finance Module
+        { id:'accounting-section', items:[
+            { id:'accounting', icon:'fa-solid fa-calculator', label:'Accounting & Finance', children:[
+              {id:'accounting-ledger',label:'General ledger', route: '/accounting/ledger'},
+              {id:'accounting-cashbook',label:'Cashbook', route: '/accounting/cashbook'},
+              {id:'accounting-journals',label:'Journal entries', route: '/accounting/journals'},
+              {id:'accounting-trial',label:'Trial balance', route: '/accounting/trial-balance'},
+              {id:'accounting-pl',label:'Profit & loss', route: '/accounting/profit-loss'},
+              {id:'accounting-bs',label:'Balance sheet', route: '/accounting/balance-sheet'},
+              {id:'accounting-expenses',label:'Expense tracking', route: '/accounting/expenses'},
+              {id:'accounting-income',label:'Income tracking', route: '/accounting/income'},
+              {id:'accounting-bankrec',label:'Bank reconciliation', route: '/accounting/bank-rec'},
             ]},
           ]
         },
-        { id:'comm-section', items:[
-            { id:'comm', icon:'fa-solid fa-comment-dots', label:'Communications', children:[
-              {id:'communication',label:'Communications', route: '/communication'},
-            ]},
-          ]
-        },
-        { id:'formula-section', items:[
-            { id:'formula', icon:'fa-solid fa-calculator', label:'Formula Engine', children:[
-              {id:'formula-engine',label:'Formula Engine', route: '/formula-engine'},
-            ]},
-          ]
-        },
+
+        // Reports & Analytics Module
         { id:'reports-section', items:[
-            { id:'reports', icon:'fa-solid fa-chart-pie', label:'Reports', children:[
-              {id:'reports-members',label:'Member Activity', route: '/reports/members'},
-              {id:'reports-savings',label:'Savings Growth', route: '/reports/savings'},
-              {id:'reports-loans',label:'Loan Performance', route: '/reports/loans'},
-              {id:'reports-financial',label:'Profit & Loss', route: '/reports/financial'},
-              {id:'reports-audit',label:'Audit Trail', route: '/reports/audit'},
-              {id:'reports-risk',label:'Default Risk', route: '/reports/risk'},
+            { id:'reports', icon:'fa-solid fa-chart-pie', label:'Reports & Analytics', children:[
+              {id:'reports-loans',label:'Loan portfolio reports', route: '/reports/loans'},
+              {id:'reports-risk',label:'PAR (Portfolio at Risk)', route: '/reports/risk'},
+              {id:'admin-due-alerts',label:'Collection reports', route: '/admin/due-alerts'},
+              {id:'reports-financial',label:'Financial statements', route: '/reports/financial'},
+              {id:'reports-branch',label:'Branch performance', route: '/reports/branch-performance'},
+              {id:'reports-staff',label:'Staff performance', route: '/reports/staff-performance'},
+              {id:'reports-defaulter',label:'Defaulter analysis', route: '/reports/defaulter-analysis'},
+              {id:'reports-cashflow',label:'Cash flow analytics', route: '/reports/cashflow-analytics'},
+              {id:'reports-ai',label:'AI-powered business insights', route: '/reports/ai-insights'},
             ]},
           ]
         },
-        { id:'admin-section', items:[
-            { id:'admin', icon:'fa-solid fa-shield-halved', label:'Security & Compliance', children:[
-              {id:'admin-users',label:'Users', route: '/admin/users'},
-              {id:'admin-audit',label:'Login Logs & Tracking', route: '/admin/audit'},
-              {id:'security',label:'Security', route: '/security'},
-              {id:'settings',label:'System Settings', route: '/settings'},
+
+        // System Settings Module
+        { id:'settings-section', items:[
+            { id:'settings-master', icon:'fa-solid fa-gears', label:'System Settings', children:[
+              {id:'settings-currency',label:'Currency settings', route: '/settings/currency'},
+              {id:'settings-interest',label:'Interest calculation methods', route: '/settings/interest'},
+              {id:'settings-penalty',label:'Penalty rules', route: '/settings/penalty'},
+              {id:'settings-fiscal',label:'Fiscal year setup', route: '/settings/fiscal-year'},
+              {id:'settings-profile',label:'Business profile', route: '/settings/business-profile'},
+              {id:'settings-tax',label:'Tax configuration', route: '/settings/tax'},
+              {id:'admin-receipts',label:'Receipt templates', route: '/admin/receipts'},
+              {id:'settings-numbers',label:'Number generation rules', route: '/settings/number-generation'},
+              {id:'settings-backup',label:'Backup & restore', route: '/settings/backup'},
+              {id:'settings-lang',label:'Language settings', route: '/settings/language'},
             ]},
           ]
         },
+
+        { id: 'users-section', items: [
+          {
+            id: 'admin-users-mgmt', icon: 'fa-solid fa-users-gear', label: 'Users Management', children: [
+              { id: 'admin-users', label: 'Users Management', route: '/admin/users' },
+              { id: 'admin-roles', label: 'User roles & permissions', route: '/admin/roles' },
+              { id: 'admin-staff-activity', label: 'Staff activity tracking', route: '/admin/audit' },
+              { id: 'admin-staff-performance', label: 'Staff targets & performance', route: '/admin/performance' },
+            ]
+          },
+        ] },
+        { id: 'security-section', items: [
+          {
+            id: 'admin-security-compliance', icon: 'fa-solid fa-shield-halved', label: 'Security & Compliance', children: [
+              { id: 'security', label: 'Two-factor authentication (2FA)', route: '/security' },
+              { id: 'admin-sessions', label: 'Device/session management', route: '/admin/sessions' },
+              { id: 'admin-ip-restrictions', label: 'IP restrictions', route: '/admin/ip-restrictions' },
+              { id: 'admin-password-policies', label: 'Password policies', route: '/admin/password-policies' },
+              { id: 'reports-audit', label: 'Audit trails', route: '/reports/audit' },
+              { id: 'admin-encryption', label: 'Data encryption', route: '/admin/encryption' },
+              { id: 'reports-compliance', label: 'Compliance reports', route: '/reports/compliance' },
+              { id: 'admin-kyc', label: 'KYC verification', route: '/admin/kyc' },
+              { id: 'admin-aml', label: 'AML monitoring', route: '/admin/aml' },
+              { id: 'admin-fraud', label: 'Fraud detection alerts', route: '/admin/fraud' },
+              { id: 'admin-regulatory', label: 'Regulatory reporting', route: '/admin/regulatory' },
+            ]
+          },
+        ] },
+        { id: 'logs-section', items: [
+          {
+            id: 'admin-logs-tracking', icon: 'fa-solid fa-list-check', label: 'Login Logs & Tracking', children: [
+              { id: 'admin-audit', label: 'Login history', route: '/admin/audit' },
+              { id: 'admin-failed-logins', label: 'Failed login attempts', route: '/admin/failed-logins' },
+              { id: 'admin-device-tracking', label: 'Device tracking', route: '/admin/device-tracking' },
+              { id: 'admin-browser-tracking', label: 'Browser tracking', route: '/admin/browser-tracking' },
+              { id: 'admin-geo-logs', label: 'Geolocation logs', route: '/admin/geo-logs' },
+              { id: 'admin-active-sessions', label: 'Active sessions', route: '/admin/active-sessions' },
+              { id: 'admin-suspicious-alerts', label: 'Suspicious activity alerts', route: '/admin/suspicious-alerts' },
+            ]
+          },
+        ] },
+        { id: 'comm-section', items: [
+          {
+            id: 'admin-comm-settings-section', icon: 'fa-solid fa-bullhorn', label: 'Communication Settings', children: [
+              { id: 'admin-comm-settings', label: 'SMS & Email Configuration', route: '/admin/settings/communication' },
+              { id: 'admin-reminders', label: 'Payment reminders', route: '/admin/reminders' },
+              { id: 'admin-due-alerts', label: 'Due-date alerts', route: '/admin/due-alerts' },
+              { id: 'admin-bulk-sms', label: 'Bulk SMS', route: '/admin/bulk-sms' },
+              { id: 'admin-marketing', label: 'Marketing campaigns', route: '/admin/marketing' },
+              { id: 'admin-receipts', label: 'Auto-generated receipts', route: '/admin/receipts' },
+              { id: 'admin-otp-settings', label: 'OTP settings', route: '/admin/otp-settings' },
+            ]
+          },
+        ] },
       ],
       member: [
         { id:'dashboard', icon:'fa-solid fa-gauge-high', label:'Dashboard', route: '/dashboard' },
@@ -234,7 +726,8 @@ function FeedtanApp(initialData) {
           this.pendingLoans = result.data.pendingLoans || [];
           this.savingsAccounts = result.data.savingsAccounts || [];
           this.systemUsers = result.data.systemUsers || [];
-          this.memberAccounts = result.data.memberAccounts || [];
+      this.activeSessions = result.data.activeSessions || [];
+      this.memberAccounts = result.data.memberAccounts || [];
           this.memberLoan = (result.data.memberLoans && result.data.memberLoans.length > 0) ? result.data.memberLoans[0] : null;
           this.memberTransactions = result.data.memberTransactions || [];
 
@@ -586,10 +1079,28 @@ function FeedtanApp(initialData) {
       });
     },
 
+    initSidebarScroll() {
+      const sidebarNav = document.getElementById('sidebar-nav');
+      if (sidebarNav) {
+        // Restore scroll position
+        const savedPosition = localStorage.getItem('sidebar-scroll');
+        if (savedPosition) {
+          sidebarNav.scrollTop = parseInt(savedPosition);
+        }
+
+        // Save scroll position on scroll
+        sidebarNav.addEventListener('scroll', () => {
+          localStorage.setItem('sidebar-scroll', sidebarNav.scrollTop);
+        });
+      }
+    },
+
     init() {
       const stored = localStorage.getItem('feedtan_dark');
       if (stored !== null) this.darkMode = stored === 'true';
       this.calcLoan();
+      this.initSettings();
+      this.initSidebarScroll();
       if (this.loggedIn) {
         this.$nextTick(() => {
           this.initCharts();

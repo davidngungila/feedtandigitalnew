@@ -18,10 +18,10 @@
           <template x-for="log in auditLogs" :key="log.id">
             <tr class="table-row">
               <td class=" text-[11px]" :class="darkMode?'text-primary-400':'text-gray-500'" x-text="log.time"></td>
-              <td class="text-xs font-semibold" :class="darkMode?'text-white':'text-primary-900'" x-text="log.user"></td>
+              <td class="text-xs font-semibold" :class="darkMode?'text-white':'text-primary-900'" x-text="log.user_name"></td>
               <td class="text-[11px]" :class="darkMode?'text-primary-300':'text-gray-600'" x-text="log.action"></td>
               <td><span class="badge badge-blue text-[10px]" x-text="log.module"></span></td>
-              <td class=" text-[11px]" :class="darkMode?'text-primary-400':'text-gray-500'" x-text="log.ip"></td>
+              <td class=" text-[11px]" :class="darkMode?'text-primary-400':'text-gray-500'" x-text="log.ip_address"></td>
               <td><span class="badge" :class="log.success?'badge-green':'badge-red'" x-text="log.success?'Success':'Failed'"></span></td>
             </tr>
           </template>

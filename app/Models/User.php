@@ -18,11 +18,20 @@ class User extends Authenticatable
         'branch',
         'phone',
         'is_active',
+        'last_login_at',
+        'two_factor_enabled',
+        'two_factor_type',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
+
+    protected $appends = ['role_label', 'last_login'];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -31,7 +40,19 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
+            'two_factor_enabled' => 'boolean',
         ];
+    }
+
+    public function getRoleLabelAttribute()
+    {
+        return ucfirst($this->role);
+    }
+
+    public function getLastLoginAttribute()
+    {
+        return $this->last_login_at ? $this->last_login_at->diffForHumans() : 'Never';
     }
 
     public function member()
