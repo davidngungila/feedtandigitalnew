@@ -92,9 +92,9 @@ function FeedtanApp(initialData) {
 
     bulkSmsForm: { group: 'All Members', message: '' },
     marketingForm: { name: '', target: 'All', content: '' },
-    receiptSettings: initialData.systemSettings.receipts || { logo: '', footer: '' },
-    otpSettings: initialData.systemSettings.otp || { sms: true, email: true, app: true, expiry: 10, retries: 3, length: 6 },
-    reminders: initialData.systemSettings.reminders || [],
+    receiptSettings: (initialData.systemSettings && initialData.systemSettings.receipts) ? initialData.systemSettings.receipts : { logo: '', footer: '' },
+    otpSettings: (initialData.systemSettings && initialData.systemSettings.otp) ? initialData.systemSettings.otp : { sms: true, email: true, app: true, expiry: 10, retries: 3, length: 6 },
+    reminders: (initialData.systemSettings && initialData.systemSettings.reminders) ? initialData.systemSettings.reminders : [],
     userForm: { id: null, name: '', email: '', password: '', role: 'member', branch: '', phone: '', is_active: true },
     ipForm: { label: '', ip_address: '' },
     kycUpdateForm: { id: null, status: 'Approved', notes: '' },

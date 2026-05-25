@@ -24,6 +24,15 @@ class DashboardController extends Controller
             return redirect()->route('dashboard');
         }
 
+        return redirect()->route('login');
+    }
+
+    public function showLogin()
+    {
+        if (Auth::check()) {
+            return redirect()->route('dashboard');
+        }
+
         return view('feedtan-digital', ['initialData' => $this->getInitialGuestData()]);
     }
 
@@ -868,11 +877,12 @@ class DashboardController extends Controller
     {
         return [
             'loggedIn' => false,
-            'currentUser' => null,
+            'currentUser' => (object)[],
             'members' => [],
             'recentTransactions' => [],
             'activeLoans' => [],
             'savingsAccounts' => [],
+            'systemSettings' => (object)[],
         ];
     }
 

@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\DashboardController;
 
-Route::get('/', [DashboardController::class, 'index'])->name('login');
+Route::get('/', [DashboardController::class, 'index']);
+Route::get('/login', [DashboardController::class, 'showLogin'])->name('login');
 Route::post('/login', [DashboardController::class, 'login'])->name('do-login');
 Route::post('/logout', [DashboardController::class, 'logout'])->name('do-logout');
 
