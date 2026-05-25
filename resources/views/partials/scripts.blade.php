@@ -588,6 +588,18 @@ function FeedtanApp(initialData) {
 
     sidebarSections: {
       admin: [
+        // My Personal Portal (Unified Access)
+        { id:'personal-portal', items:[
+            { id:'my-account', icon:'fa-solid fa-user-circle', label:'My Portal', children:[
+              {id:'portal-dashboard',label:'My Dashboard', route: '/portal/dashboard'},
+              {id:'portal-profile',label:'Personal Profile', route: '/portal/profile'},
+              {id:'portal-loans',label:'My Loans', route: '/portal/loans'},
+              {id:'portal-savings',label:'My Savings', route: '/portal/savings'},
+              {id:'portal-statements',label:'Account Statements', route: '/portal/statements'},
+            ]},
+          ]
+        },
+
         // Members Module
         { id:'members-section', items:[
             { id:'members', icon:'fa-solid fa-users', label:'Members', children:[
@@ -600,6 +612,47 @@ function FeedtanApp(initialData) {
               {id:'members-docs',label:'Documents', route: '/members/documents'},
               {id:'reports-members',label:'Member Reports', route: '/reports/members'},
               {id:'members-blacklisted',label:'Blacklisted Members', route: '/members/blacklisted'},
+            ]},
+          ]
+        },
+
+        // Savings & Deposits Module
+        { id:'savings-section', items:[
+            { id:'savings-deposits', icon:'fa-solid fa-piggy-bank', label:'Savings & Deposits', children:[
+              {id:'savings-dashboard',label:'Dashboard', route: '/savings/dashboard'},
+              {id:'savings-accounts',label:'Savings Accounts', route: '/savings/accounts'},
+              {id:'savings-products',label:'Savings Products', route: '/savings/products'},
+              {id:'deposits-group',label:'Deposits', children:[
+                {id:'deposit-new',label:'New Deposit', route: '/deposits/new'},
+                {id:'deposit-history',label:'Deposit History', route: '/deposits/history'},
+                {id:'deposit-bulk',label:'Bulk Deposits', route: '/deposits/bulk'},
+                {id:'deposit-mobile',label:'Mobile Deposits', route: '/deposits/mobile'},
+                {id:'deposit-pending',label:'Pending Deposits', route: '/deposits/pending'},
+                {id:'deposit-reports',label:'Deposit Reports', route: '/deposits/reports'},
+              ]},
+              {id:'withdrawals-group',label:'Withdrawals', children:[
+                {id:'withdrawal-new',label:'New Withdrawal', route: '/withdrawals/new'},
+                {id:'withdrawal-requests',label:'Withdrawal Requests', route: '/withdrawals/requests'},
+                {id:'withdrawal-history',label:'Withdrawal History', route: '/withdrawals/history'},
+                {id:'withdrawal-approved',label:'Approved Withdrawals', route: '/withdrawals/approved'},
+                {id:'withdrawal-rejected',label:'Rejected Withdrawals', route: '/withdrawals/rejected'},
+              ]},
+              {id:'interest-group',label:'Interest Management', children:[
+                {id:'interest-rules',label:'Interest Rules', route: '/interest/rules'},
+                {id:'interest-posting',label:'Interest Posting', route: '/interest/posting'},
+                {id:'interest-history',label:'Interest History', route: '/interest/history'},
+              ]},
+              {id:'statements-group',label:'Statements', children:[
+                {id:'member-statements',label:'Member Statements', route: '/statements/member'},
+                {id:'savings-statements',label:'Savings Statements', route: '/statements/savings'},
+                {id:'download-reports',label:'Download Reports', route: '/statements/download'},
+              ]},
+              {id:'reports-group',label:'Reports', children:[
+                {id:'savings-summary',label:'Savings Summary', route: '/reports/savings/summary'},
+                {id:'reports-deposits',label:'Deposit Reports', route: '/reports/savings/deposits'},
+                {id:'reports-withdrawals',label:'Withdrawal Reports', route: '/reports/savings/withdrawals'},
+                {id:'reports-branch',label:'Branch Reports', route: '/reports/savings/branch'},
+              ]},
             ]},
           ]
         },

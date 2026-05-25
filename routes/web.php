@@ -3,6 +3,14 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SavingsController;
+use App\Http\Controllers\DepositController;
+use App\Http\Controllers\WithdrawalController;
+use App\Http\Controllers\InterestController;
+use App\Http\Controllers\StatementController;
+use App\Http\Controllers\SavingsReportController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\MemberPortalController;
 
 Route::get('/', [DashboardController::class, 'index']);
 Route::get('/login', [DashboardController::class, 'showLogin'])->name('login');
@@ -21,12 +29,62 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/members/documents', [DashboardController::class, 'membersDocuments'])->name('members.documents');
     Route::get('/members/blacklisted', [DashboardController::class, 'membersBlacklisted'])->name('members.blacklisted');
     
-    Route::get('/savings/plans', [DashboardController::class, 'savingsPlans'])->name('savings.plans');
-    Route::get('/savings/deposit', [DashboardController::class, 'savingsDeposit'])->name('savings.deposit');
-    Route::get('/savings/accounts', [DashboardController::class, 'savingsAccounts'])->name('savings.accounts');
-    
-    Route::get('/loans/apply', [DashboardController::class, 'loansApply'])->name('loans.apply');
-    Route::get('/loans/active', [DashboardController::class, 'loansActive'])->name('loans.active');
+    // Savings & Deposits
+    Route::prefix('savings')->name('savings.')->group(function () {
+        Route::get('/dashboard', [SavingsController::class, 'dashboard'])->name('dashboard');
+        Route::get('/accounts', [SavingsController::class, 'accounts'])->name('accounts');
+        Route::get('/accounts/create', [SavingsController::class, 'createAccount'])->name('accounts.create');
+        Route::post('/accounts', [SavingsController::class, 'storeAccount'])->name('accounts.store');
+        Route::get('/products', [SavingsController::class, 'products'])->name('products');
+        Route::post('/products', [SavingsController::class, 'storeProduct'])->name('products.store');
+    });
+
+    Route::prefix('deposits')->name('deposits.')->group(function () {
+        Route::get('/new', [DepositController::class, 'new'])->name('new');
+        Route::post('/', [DepositController::class, 'store'])->name('store');
+        Route::get('/history', [DepositController::class, 'history'])->name('history');
+        Route::get('/bulk', [DepositController::class, 'bulk'])->name('bulk');
+        Route::get('/mobile', [DepositController::class, 'mobile'])->name('mobile');
+        Route::get('/pending', [DepositController::class, 'pending'])->name('pending');
+        Route::get('/reports', [DepositController::class, 'reports'])->name('reports');
+    });
+
+    Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
+        Route::get('/new', [WithdrawalController::class, 'new'])->name('new');
+        Route::post('/', [WithdrawalController::class, 'store'])->name('store');
+        Route::get('/requests', [WithdrawalController::class, 'requests'])->name('requests');
+        Route::get('/history', [WithdrawalController::class, 'history'])->name('history');
+        Route::get('/approved', [WithdrawalController::class, 'approved'])->name('approved');
+        Route::get('/rejected', [WithdrawalController::class, 'rejected'])->name('rejected');
+        Route::post('/{withdrawalRequest}/approve', [WithdrawalController::class, 'approve'])->name('approve');
+        Route::post('/{withdrawalRequest}/reject', [WithdrawalController::class, 'reject'])->name('reject');
+    });
+
+    Route::prefix('interest')->name('interest.')->group(function () {
+        Route::get('/rules', [InterestController::class, 'rules'])->name('rules');
+        Route::post('/rules', [InterestController::class, 'storeRule'])->name('rules.store');
+        Route::get('/posting', [InterestController::class, 'posting'])->name('posting');
+        Route::post('/posting', [InterestController::class, 'processPosting'])->name('posting.process');
+        Route::get('/history', [InterestController::class, 'history'])->name('history');
+    });
+
+    Route::prefix('statements')->name('statements.')->group(function () {
+        Route::get('/member', [StatementController::class, 'member'])->name('member');
+        Route::get('/savings', [StatementController::class, 'savings'])->name('savings');
+        Route::get('/download', [StatementController::class, 'download'])->name('download');
+        Route::get('/view', [StatementController::class, 'generate'])->name('view');
+    });
+
+    Route::prefix('reports/savings')->name('reports.savings.')->group(function () {
+        Route::get('/summary', [SavingsReportController::class, 'summary'])->name('summary');
+        Route::get('/deposits', [SavingsReportController::class, 'deposits'])->name('deposits');
+        Route::get('/withdrawals', [SavingsReportController::class, 'withdrawals'])->name('withdrawals');
+        Route::get('/branch', [SavingsReportController::class, 'branch'])->name('branch');
+    });
+
+    Route::get('/loans/apply', [LoanController::class, 'apply'])->name('loans.apply');
+    Route::post('/loans/apply', [LoanController::class, 'store'])->name('loans.store');
+    Route::get('/loans/active', [LoanController::class, 'active'])->name('loans.active');
     Route::get('/loans/repayments', [DashboardController::class, 'loansRepayments'])->name('loans.repayments');
     Route::get('/loans/approval-workflow', [DashboardController::class, 'loansApprovalWorkflow'])->name('loans.approval-workflow');
     Route::get('/loans/guarantor-mgmt', [DashboardController::class, 'loansGuarantorManagement'])->name('loans.guarantor-mgmt');
@@ -146,6 +204,15 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/admin/sessions/{id}', [DashboardController::class, 'terminateSession'])->name('admin.sessions.terminate');
     Route::post('/admin/sessions/terminate-all', [DashboardController::class, 'terminateAllSessions'])->name('admin.sessions.terminate-all');
     
-    Route::get('/withdrawals/requests', [DashboardController::class, 'withdrawalsRequests'])->name('withdrawals.requests');
+    Route::get('/withdrawals/requests', [WithdrawalController::class, 'requests'])->name('withdrawals.requests');
+
+    // Member Portal (Single folder for member details)
+    Route::prefix('portal')->name('portal.')->group(function () {
+        Route::get('/dashboard', [MemberPortalController::class, 'index'])->name('dashboard');
+        Route::get('/profile', [MemberPortalController::class, 'profile'])->name('profile');
+        Route::get('/loans', [MemberPortalController::class, 'loans'])->name('loans');
+        Route::get('/savings', [MemberPortalController::class, 'savings'])->name('savings');
+        Route::get('/statements', [MemberPortalController::class, 'statements'])->name('statements');
+    });
 });
 

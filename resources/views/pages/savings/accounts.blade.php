@@ -7,24 +7,57 @@
 <div class="animate-[fadeIn_0.4s_ease] space-y-4">
   <div class="flex items-center justify-between">
     <h2 class="text-lg font-bold" :class="darkMode?'text-white':'text-primary-900'">Savings Accounts</h2>
+    <a href="{{ route('savings.accounts.create') }}" class="px-4 py-2 rounded-xl bg-primary-600 text-white text-xs font-semibold hover:bg-primary-500 transition-all">
+      <i class="fa-solid fa-plus mr-1.5"></i> Open New Account
+    </a>
   </div>
 
-  <!-- Product Summary -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-    <template x-for="p in savingsProducts" :key="p.id">
-      <div class="card rounded-xl p-4 cursor-pointer hover:border-primary-500 transition-colors border"
-           :class="darkMode?'border-[#1a3328] hover:border-primary-600':'border-transparent hover:border-primary-400'">
-        <div class="flex items-center justify-between mb-3">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs" :style="`background:${p.color}22;color:${p.color}`">
-            <i :class="p.icon"></i>
-          </div>
-          <span class="text-[10px] font-bold" :style="`color:${p.color}`" x-text="p.rate+'% p.a'"></span>
-        </div>
-        <p class="text-[11px] font-bold mb-1" :class="darkMode?'text-primary-300':'text-primary-700'" x-text="p.code"></p>
-        <p class="text-lg font-bold " :class="darkMode?'text-white':'text-primary-900'" x-text="'TZS '+(p.total/1000000).toFixed(1)+'M'"></p>
-        <p class="text-[10px] mt-1" :class="darkMode?'text-primary-500':'text-gray-400'" x-text="p.members+' accounts'"></p>
-      </div>
-    </template>
+  <div class="card rounded-2xl p-5">
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="text-left">Account No</th>
+            <th class="text-left">Member</th>
+            <th class="text-left">Product</th>
+            <th class="text-right">Balance (TZS)</th>
+            <th class="text-left">Opened Date</th>
+            <th class="text-left">Status</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach($accounts as $account)
+          <tr class="table-row">
+            <td class="text-xs font-mono font-bold">{{ $account->account_no }}</td>
+            <td>
+              <div class="flex flex-col">
+                <span class="text-xs font-semibold" :class="darkMode?'text-white':'text-primary-900'">{{ $account->member->user->name }}</span>
+                <span class="text-[10px] text-gray-500">{{ $account->member->member_no }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-blue text-[10px]">{{ $account->savingsProduct->name ?? $account->product_type }}</span>
+            </td>
+            <td class="text-right text-xs font-bold" :class="darkMode?'text-primary-300':'text-primary-900'">
+              {{ number_format($account->balance, 2) }}
+            </td>
+            <td class="text-[11px]">{{ $account->created_at->format('M d, Y') }}</td>
+            <td>
+              <span class="badge {{ $account->status == 'Active' ? 'badge-green' : 'badge-red' }} text-[10px]">
+                {{ $account->status }}
+              </span>
+            </td>
+            <td class="text-right">
+              <button class="p-1.5 rounded-lg hover:bg-primary-50 text-primary-600 transition-colors">
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </td>
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <div class="card rounded-2xl p-5">
