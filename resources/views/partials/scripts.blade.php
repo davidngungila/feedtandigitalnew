@@ -78,6 +78,23 @@ function FeedtanApp(initialData) {
     bankRecItems: [],
     trialBalanceItems: [],
 
+    // Investments Management
+    investmentProducts: [
+      { id: 1, name: 'Fixed Deposit – 12 Months', description: 'High-yield savings with 18% annual return paid at maturity.', rate: 18, duration: 12, min_amount: 500000, payout: 'At Maturity', color: '#10b981', icon: 'fa-solid fa-piggy-bank', active: true, allocation: 45 },
+      { id: 2, name: 'Wealth Builder Plan', description: 'Compound interest plan with monthly profit distributions.', rate: 15, duration: 24, min_amount: 1000000, payout: 'Monthly', color: '#3b82f6', icon: 'fa-solid fa-chart-line', active: true, allocation: 30 },
+      { id: 3, name: 'Treasury Bond Fund', description: 'Stable returns backed by government securities.', rate: 12, duration: 6, min_amount: 100000, payout: 'Quarterly', color: '#f59e0b', icon: 'fa-solid fa-building-columns', active: true, allocation: 15 },
+      { id: 4, name: 'Real Estate Fund', description: 'Long-term capital appreciation from property investments.', rate: 20, duration: 60, min_amount: 5000000, payout: 'Annually', color: '#ef4444', icon: 'fa-solid fa-house-chimney', active: true, allocation: 10 },
+    ],
+    activeInvestments: [
+      { id: 1, ref: 'INV-2026-001', member_name: 'John Doe', product_name: 'Fixed Deposit – 12 Months', principal: 5000000, rate: 18, start_date: '2026-01-15', maturity_date: '2027-01-15', accrued: 450000, status: 'Active' },
+      { id: 2, ref: 'INV-2026-002', member_name: 'Jane Smith', product_name: 'Wealth Builder Plan', principal: 12000000, rate: 15, start_date: '2026-02-10', maturity_date: '2028-02-10', accrued: 600000, status: 'Active' },
+      { id: 3, ref: 'INV-2025-098', member_name: 'Hamis Juma', product_name: 'Treasury Bond Fund', principal: 2500000, rate: 12, start_date: '2025-11-20', maturity_date: '2026-05-20', accrued: 150000, status: 'matured' },
+    ],
+    profitPayments: [
+      { id: 1, date: '2026-05-01', ref: 'PAY-88291', member_name: 'John Doe', inv_ref: 'INV-2026-001', amount: 75000, method: 'Member Account' },
+      { id: 2, date: '2026-05-01', ref: 'PAY-88292', member_name: 'Jane Smith', inv_ref: 'INV-2026-002', amount: 150000, method: 'Bank Transfer' },
+    ],
+
     // Loans Management
     loanRepayments: [],
     approvalRequests: [],
@@ -622,6 +639,21 @@ function FeedtanApp(initialData) {
           ]
         },
 
+        // Investments Module
+        { id:'investments-section', items:[
+            { id:'investments', icon:'fa-solid fa-chart-line', label:'Investments', children:[
+              {id:'investments-dashboard',label:'Investment Dashboard', route: '/investments/dashboard'},
+              {id:'investments-products',label:'Investment Products', route: '/investments/products'},
+              {id:'investments-open',label:'Open Investment', route: '/investments/open'},
+              {id:'investments-active',label:'Active Investments', route: '/investments/active'},
+              {id:'investments-matured',label:'Matured Investments', route: '/investments/matured'},
+              {id:'investments-profit-payments',label:'Profit Payments', route: '/investments/profit-payments'},
+              {id:'investments-reports',label:'Investment Reports', route: '/investments/reports'},
+              {id:'investments-certificates',label:'Certificates', route: '/investments/certificates'},
+            ]},
+          ]
+        },
+
         // Reports & Analytics Module
         { id:'reports-section', items:[
             { id:'reports', icon:'fa-solid fa-chart-pie', label:'Reports & Analytics', children:[
@@ -841,7 +873,7 @@ function FeedtanApp(initialData) {
       
       this.activePage = page;
       this.sidebarOpen = false;
-      if (page === 'dashboard') {
+      if (this.activePage === 'dashboard' || this.activePage === 'investments-dashboard') {
         this.$nextTick(() => this.initCharts());
       }
     },
@@ -862,6 +894,7 @@ function FeedtanApp(initialData) {
         // Only allow one dropdown open at a time
         this.openDropdowns = [id];
       }
+      localStorage.setItem('sidebar-open-dropdowns', JSON.stringify(this.openDropdowns));
     },
 
     isChildActive(item) {
@@ -1055,6 +1088,35 @@ function FeedtanApp(initialData) {
             }
           });
         }
+
+        // Investment Dashboard Chart
+        const invDashCtx = document.getElementById('investmentDashboardChart');
+        if (invDashCtx) {
+          this.charts.investmentDashboard = new Chart(invDashCtx, {
+            type: 'line',
+            data: {
+              labels: months.slice(0, 6),
+              datasets: [
+                { label: 'Total Portfolio', data: [1.2, 1.4, 1.65, 1.9, 2.2, 2.45].map(v => v * 1000000000), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.4 },
+                { label: 'Monthly Returns', data: [15, 18, 22, 28, 35, 42].map(v => v * 1000000), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }
+              ]
+            },
+            options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, ticks: { ...commonOptions.scales.y.ticks, callback: v => v >= 1000000000 ? (v/1000000000).toFixed(1) + 'B' : (v/1000000).toFixed(0) + 'M' } } } }
+          });
+        }
+
+        // Investment Allocation Chart
+        const invAllocCtx = document.getElementById('investmentAllocationChart');
+        if (invAllocCtx) {
+          this.charts.investmentAllocation = new Chart(invAllocCtx, {
+            type: 'doughnut',
+            data: {
+              labels: this.investmentProducts.map(p => p.name),
+              datasets: [{ data: this.investmentProducts.map(p => p.allocation), backgroundColor: this.investmentProducts.map(p => p.color), borderWidth: 2, borderColor: bgColor }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
+          });
+        }
       });
     },
 
@@ -1114,21 +1176,58 @@ function FeedtanApp(initialData) {
         // Restore scroll position
         const savedPosition = localStorage.getItem('sidebar-scroll');
         if (savedPosition) {
-          sidebarNav.scrollTop = parseInt(savedPosition);
+          // Use setTimeout to ensure the DOM is fully rendered and scrollable
+          setTimeout(() => {
+            sidebarNav.scrollTop = parseInt(savedPosition);
+          }, 100);
         }
 
         // Save scroll position on scroll
         sidebarNav.addEventListener('scroll', () => {
           localStorage.setItem('sidebar-scroll', sidebarNav.scrollTop);
         });
+
+        // Also save before page unloads
+        window.addEventListener('beforeunload', () => {
+          localStorage.setItem('sidebar-scroll', sidebarNav.scrollTop);
+        });
       }
+    },
+
+    expandActiveSections() {
+      const role = this.currentUser.role === 'admin' || this.currentUser.role === 'manager' || this.currentUser.role === 'teller' ? 'admin' : 'member';
+      const sections = this.sidebarSections[role];
+      if (!sections) return;
+
+      sections.forEach(section => {
+        if (section.items) {
+          section.items.forEach(item => {
+            if (item.children && item.children.some(child => child.id === this.activePage)) {
+              if (!this.openDropdowns.includes(item.id)) {
+                this.openDropdowns.push(item.id);
+              }
+            }
+          });
+        }
+      });
     },
 
     init() {
       const stored = localStorage.getItem('feedtan_dark');
       if (stored !== null) this.darkMode = stored === 'true';
+
+      const storedDropdowns = localStorage.getItem('sidebar-open-dropdowns');
+      if (storedDropdowns) {
+        try {
+          this.openDropdowns = JSON.parse(storedDropdowns);
+        } catch (e) {
+          this.openDropdowns = [];
+        }
+      }
+
       this.calcLoan();
       this.initSettings();
+      this.expandActiveSections();
       this.initSidebarScroll();
       if (this.loggedIn) {
         this.$nextTick(() => {

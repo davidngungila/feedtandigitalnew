@@ -161,9 +161,44 @@ class DashboardController extends Controller
         return $this->renderPage('pages.loans.collateral_mgmt', 'loan-collateral-mgmt');
     }
 
+    public function investmentsDashboard()
+    {
+        return $this->renderPage('pages.investments.dashboard', 'investments-dashboard');
+    }
+
+    public function investmentsProducts()
+    {
+        return $this->renderPage('pages.investments.products', 'investments-products');
+    }
+
+    public function investmentsOpen()
+    {
+        return $this->renderPage('pages.investments.open', 'investments-open');
+    }
+
     public function investmentsActive()
     {
         return $this->renderPage('pages.investments.active', 'investments-active');
+    }
+
+    public function investmentsMatured()
+    {
+        return $this->renderPage('pages.investments.matured', 'investments-matured');
+    }
+
+    public function investmentsProfitPayments()
+    {
+        return $this->renderPage('pages.investments.profit_payments', 'investments-profit-payments');
+    }
+
+    public function investmentsReports()
+    {
+        return $this->renderPage('pages.investments.reports', 'investments-reports');
+    }
+
+    public function investmentsCertificates()
+    {
+        return $this->renderPage('pages.investments.certificates', 'investments-certificates');
     }
 
     public function accountingLedger()

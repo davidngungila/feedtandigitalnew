@@ -38,7 +38,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/loans/interest-config', [DashboardController::class, 'loansInterestConfiguration'])->name('loans.interest-config');
     Route::get('/loans/collateral-mgmt', [DashboardController::class, 'loansCollateralManagement'])->name('loans.collateral-mgmt');
     
+    Route::get('/investments/dashboard', [DashboardController::class, 'investmentsDashboard'])->name('investments.dashboard');
+    Route::get('/investments/products', [DashboardController::class, 'investmentsProducts'])->name('investments.products');
+    Route::get('/investments/open', [DashboardController::class, 'investmentsOpen'])->name('investments.open');
     Route::get('/investments/active', [DashboardController::class, 'investmentsActive'])->name('investments.active');
+    Route::get('/investments/matured', [DashboardController::class, 'investmentsMatured'])->name('investments.matured');
+    Route::get('/investments/profit-payments', [DashboardController::class, 'investmentsProfitPayments'])->name('investments.profit-payments');
+    Route::get('/investments/reports', [DashboardController::class, 'investmentsReports'])->name('investments.reports');
+    Route::get('/investments/certificates', [DashboardController::class, 'investmentsCertificates'])->name('investments.certificates');
     
     Route::get('/accounting/ledger', [DashboardController::class, 'accountingLedger'])->name('accounting.ledger');
     Route::get('/accounting/cashbook', [DashboardController::class, 'accountingCashbook'])->name('accounting.cashbook');
