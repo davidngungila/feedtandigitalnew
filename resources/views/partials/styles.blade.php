@@ -213,4 +213,11 @@ canvas {
 .role-teller { background:#f59e0b;color:#fff; }
 .role-member { background:#6366f1;color:#fff; }
 .role-auditor { background:#ef4444;color:#fff; }
+.role-deposit_officer { background:#10b981;color:#fff; }
+.role-loan_officer { background:#6366f1;color:#fff; }
+.role-swf_officer { background:#8b5cf6;color:#fff; }
+.role-marketing_officer { background:#ec4899;color:#fff; }
+.role-secretary { background:#0ea5e9;color:#fff; }
+.role-chairperson { background:#84cc16;color:#fff; }
+.role-accountant { background:#f97316;color:#fff; }
 </style>

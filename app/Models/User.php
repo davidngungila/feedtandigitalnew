@@ -65,4 +65,11 @@ class User extends Authenticatable
     public function isTeller() { return $this->role === 'teller'; }
     public function isMember() { return $this->role === 'member'; }
     public function isAuditor() { return $this->role === 'auditor'; }
+    public function isDepositOfficer() { return $this->role === 'deposit_officer'; }
+    public function isLoanOfficer() { return $this->role === 'loan_officer'; }
+    public function isSwfOfficer() { return $this->role === 'swf_officer'; }
+    public function isMarketingOfficer() { return $this->role === 'marketing_officer'; }
+    public function isSecretary() { return $this->role === 'secretary'; }
+    public function isChairperson() { return $this->role === 'chairperson'; }
+    public function isAccountant() { return $this->role === 'accountant'; }
 }

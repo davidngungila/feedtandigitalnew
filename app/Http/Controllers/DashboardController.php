@@ -437,7 +437,10 @@ class DashboardController extends Controller
             $user = Auth::user();
             
             // Check if user is a staff member
-            if (!$user->isAdmin() && !$user->isManager() && !$user->isTeller() && !$user->isAuditor()) {
+            if (!$user->isAdmin() && !$user->isManager() && !$user->isTeller() && !$user->isAuditor() && 
+                !$user->isDepositOfficer() && !$user->isLoanOfficer() && !$user->isSwfOfficer() && 
+                !$user->isMarketingOfficer() && !$user->isSecretary() && !$user->isChairperson() && 
+                !$user->isAccountant()) {
                 Auth::logout();
                 
                 AuditLog::create([

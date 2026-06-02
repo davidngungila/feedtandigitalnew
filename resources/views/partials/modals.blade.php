@@ -149,7 +149,13 @@
           <option value="manager">Manager</option>
           <option value="teller">Teller</option>
           <option value="auditor">Auditor</option>
-          <option value="member">Member</option>
+          <option value="deposit_officer">Deposit Officer</option>
+          <option value="loan_officer">Loan Officer</option>
+          <option value="swf_officer">SWF Officer</option>
+          <option value="marketing_officer">Marketing Officer</option>
+          <option value="secretary">Secretary</option>
+          <option value="chairperson">Chairperson</option>
+          <option value="accountant">Accountant</option>
         </select></div>
       <div class="col-span-2"><label class="form-label text-[11px]" :class="darkMode?'text-primary-300':'text-primary-700'" x-text="userForm.id ? 'Password (leave blank to keep current)' : 'Password *'"></label>
         <input x-model="userForm.password" type="password" class="form-input input-field text-xs" placeholder="Temporary password" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/></div>

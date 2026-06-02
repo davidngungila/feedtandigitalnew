@@ -56,14 +56,94 @@ class DatabaseSeeder extends Seeder
             'phone' => '+255 622 000 003',
         ]);
 
+        // Create Auditor
+        User::create([
+            'name' => 'Amina Salim Hassan',
+            'email' => 'auditor@feedtan.co.tz',
+            'password' => Hash::make('password'),
+            'role' => 'auditor',
+            'branch' => 'Dar es Salaam HQ',
+            'phone' => '+255 784 000 004',
+        ]);
+
+        // Create Deposit Officer
+        User::create([
+            'name' => 'Grace Nyambo',
+            'email' => 'deposit@feedtan.co.tz',
+            'password' => Hash::make('password'),
+            'role' => 'deposit_officer',
+            'branch' => 'Mwanza Branch',
+            'phone' => '+255 754 000 005',
+        ]);
+
+        // Create Loan Officer
+        User::create([
+            'name' => 'Emmanuel Kiiza',
+            'email' => 'loanofficer@feedtan.co.tz',
+            'password' => Hash::make('password'),
+            'role' => 'loan_officer',
+            'branch' => 'Arusha Branch',
+            'phone' => '+255 713 000 006',
+        ]);
+
+        // Create SWF Officer
+        User::create([
+            'name' => 'Zuhura Rashid',
+            'email' => 'swfofficer@feedtan.co.tz',
+            'password' => Hash::make('password'),
+            'role' => 'swf_officer',
+            'branch' => 'Mbeya Branch',
+            'phone' => '+255 655 000 007',
+        ]);
+
+        // Create Marketing Officer
+        User::create([
+            'name' => 'Patrick Mwangi',
+            'email' => 'marketing@feedtan.co.tz',
+            'password' => Hash::make('password'),
+            'role' => 'marketing_officer',
+            'branch' => 'Dodoma Branch',
+            'phone' => '+255 785 000 008',
+        ]);
+
+        // Create Secretary
+        User::create([
+            'name' => 'Baraka Cosmas',
+            'email' => 'secretary@feedtan.co.tz',
+            'password' => Hash::make('password'),
+            'role' => 'secretary',
+            'branch' => 'Dar es Salaam HQ',
+            'phone' => '+255 714 000 009',
+        ]);
+
+        // Create Chairperson
+        User::create([
+            'name' => 'Neema Okonkwo',
+            'email' => 'chairperson@feedtan.co.tz',
+            'password' => Hash::make('password'),
+            'role' => 'chairperson',
+            'branch' => 'Dar es Salaam HQ',
+            'phone' => '+255 756 000 010',
+        ]);
+
+        // Create Accountant
+        User::create([
+            'name' => 'Yusuf Kombo',
+            'email' => 'accountant@feedtan.co.tz',
+            'password' => Hash::make('password'),
+            'role' => 'accountant',
+            'branch' => 'Dar es Salaam HQ',
+            'phone' => '+255 623 000 011',
+        ]);
+
         // Create Member User & Profile
         $memberUser = User::create([
-            'name' => 'Amina Salim Hassan',
+            'name' => 'Rehema Said',
             'email' => 'member@feedtan.co.tz',
             'password' => Hash::make('password'),
             'role' => 'member',
             'branch' => 'Dar es Salaam HQ',
-            'phone' => '+255 784 000 004',
+            'phone' => '+255 784 000 012',
         ]);
 
         $memberProfile = Member::create([
