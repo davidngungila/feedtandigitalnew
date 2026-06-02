@@ -17,18 +17,6 @@
     </div>
   </div>
 
-  <!-- User Info in Sidebar -->
-  <div class="p-3 border-b border-primary-800/50 flex-shrink-0">
-    <div class="flex items-center gap-3 p-2 rounded-xl bg-primary-800/30">
-      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-           x-text="currentUser.name ? currentUser.name.charAt(0) : ''"></div>
-      <div class="min-w-0">
-        <p class="text-white text-xs font-semibold truncate" x-text="currentUser.name"></p>
-        <span class="role-tag" :class="'role-'+currentUser.role" x-text="currentUser.role ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1) : ''"></span>
-      </div>
-    </div>
-  </div>
-
   <!-- Navigation -->
   <nav id="sidebar-nav" class="flex-1 min-h-0 overflow-y-scroll py-3 px-2 space-y-0.5">
 
