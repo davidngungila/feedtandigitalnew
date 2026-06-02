@@ -14,6 +14,7 @@ function FeedtanApp(initialData) {
     sidebarOpen: false,
     sidebarCollapsed: false,
     activePage: initialData.activePage || 'dashboard',
+    isLoading: initialData.isLoading ?? false,
     activeModal: null,
     openDropdowns: [],
     memberPage: 1,
@@ -588,30 +589,15 @@ function FeedtanApp(initialData) {
 
     sidebarSections: {
       admin: [
-        // My Personal Portal (Unified Access)
-        { id:'personal-portal', items:[
-            { id:'my-account', icon:'fa-solid fa-user-circle', label:'My Portal', children:[
-              {id:'portal-dashboard',label:'My Dashboard', route: '/portal/dashboard'},
-              {id:'portal-profile',label:'Personal Profile', route: '/portal/profile'},
-              {id:'portal-loans',label:'My Loans', route: '/portal/loans'},
-              {id:'portal-savings',label:'My Savings', route: '/portal/savings'},
-              {id:'portal-statements',label:'Account Statements', route: '/portal/statements'},
-            ]},
-          ]
-        },
-
         // Members Module
         { id:'members-section', items:[
             { id:'members', icon:'fa-solid fa-users', label:'Members', children:[
               {id:'members-active',label:'All Members', route: '/members/active'},
               {id:'member-register',label:'Add Member', route: '/members/register'},
-              {id:'members-groups',label:'Groups', route: '/members/groups'},
-              {id:'members-guarantors',label:'Guarantors', route: '/members/guarantors'},
               {id:'admin-kyc',label:'KYC Verification', route: '/admin/kyc'},
-              {id:'members-accounts',label:'Member Accounts', route: '/members/active'},
               {id:'members-docs',label:'Documents', route: '/members/documents'},
-              {id:'reports-members',label:'Member Reports', route: '/reports/members'},
               {id:'members-blacklisted',label:'Blacklisted Members', route: '/members/blacklisted'},
+              {id:'member-types',label:'Member Types', route: '/members/types'},
             ]},
           ]
         },
@@ -660,34 +646,12 @@ function FeedtanApp(initialData) {
         // Loan Management Module
         { id:'loans-section', items:[
             { id:'loans', icon:'fa-solid fa-hand-holding-dollar', label:'Loan Management', children:[
+              {id:'loan-dashboard',label:'Loan Dashboard', route: '/loans/dashboard'},
               {id:'loan-apply',label:'Loan applications', route: '/loans/apply'},
               {id:'loan-approval',label:'Loan approval workflow', route: '/loans/approval-workflow'},
-              {id:'loan-guarantors',label:'Guarantor management', route: '/loans/guarantor-mgmt'},
               {id:'loan-active',label:'Loan disbursement', route: '/loans/active'},
               {id:'loan-repayments',label:'Repayment schedules', route: '/loans/repayments'},
-              {id:'loan-penalty',label:'Penalty calculations', route: '/loans/penalty-calc'},
-              {id:'loan-restructure',label:'Loan restructuring', route: '/loans/restructuring'},
-              {id:'loan-refinance',label:'Loan refinancing', route: '/loans/refinancing'},
-              {id:'loan-writeoffs',label:'Loan write-offs', route: '/loans/write-offs'},
-              {id:'loan-products',label:'Loan products setup', route: '/loans/products-setup'},
-              {id:'loan-interest',label:'Interest configuration', route: '/loans/interest-config'},
-              {id:'loan-collateral',label:'Collateral management', route: '/loans/collateral-mgmt'},
-            ]},
-          ]
-        },
-
-        // Accounting & Finance Module
-        { id:'accounting-section', items:[
-            { id:'accounting', icon:'fa-solid fa-calculator', label:'Accounting & Finance', children:[
-              {id:'accounting-ledger',label:'General ledger', route: '/accounting/ledger'},
-              {id:'accounting-cashbook',label:'Cashbook', route: '/accounting/cashbook'},
-              {id:'accounting-journals',label:'Journal entries', route: '/accounting/journals'},
-              {id:'accounting-trial',label:'Trial balance', route: '/accounting/trial-balance'},
-              {id:'accounting-pl',label:'Profit & loss', route: '/accounting/profit-loss'},
-              {id:'accounting-bs',label:'Balance sheet', route: '/accounting/balance-sheet'},
-              {id:'accounting-expenses',label:'Expense tracking', route: '/accounting/expenses'},
-              {id:'accounting-income',label:'Income tracking', route: '/accounting/income'},
-              {id:'accounting-bankrec',label:'Bank reconciliation', route: '/accounting/bank-rec'},
+              {id:'loan-products',label:'Loan products', route: '/loans/products-setup'},
             ]},
           ]
         },
@@ -707,33 +671,12 @@ function FeedtanApp(initialData) {
           ]
         },
 
-        // Reports & Analytics Module
-        { id:'reports-section', items:[
-            { id:'reports', icon:'fa-solid fa-chart-pie', label:'Reports & Analytics', children:[
-              {id:'reports-loans',label:'Loan portfolio reports', route: '/reports/loans'},
-              {id:'reports-risk',label:'PAR (Portfolio at Risk)', route: '/reports/risk'},
-              {id:'admin-due-alerts',label:'Collection reports', route: '/admin/due-alerts'},
-              {id:'reports-financial',label:'Financial statements', route: '/reports/financial'},
-              {id:'reports-branch',label:'Branch performance', route: '/reports/branch-performance'},
-              {id:'reports-staff',label:'Staff performance', route: '/reports/staff-performance'},
-              {id:'reports-defaulter',label:'Defaulter analysis', route: '/reports/defaulter-analysis'},
-              {id:'reports-cashflow',label:'Cash flow analytics', route: '/reports/cashflow-analytics'},
-              {id:'reports-ai',label:'AI-powered business insights', route: '/reports/ai-insights'},
-            ]},
-          ]
-        },
-
         // System Settings Module
         { id:'settings-section', items:[
             { id:'settings-master', icon:'fa-solid fa-gears', label:'System Settings', children:[
               {id:'settings-currency',label:'Currency settings', route: '/settings/currency'},
-              {id:'settings-interest',label:'Interest calculation methods', route: '/settings/interest'},
-              {id:'settings-penalty',label:'Penalty rules', route: '/settings/penalty'},
               {id:'settings-fiscal',label:'Fiscal year setup', route: '/settings/fiscal-year'},
               {id:'settings-profile',label:'Business profile', route: '/settings/business-profile'},
-              {id:'settings-tax',label:'Tax configuration', route: '/settings/tax'},
-              {id:'admin-receipts',label:'Receipt templates', route: '/admin/receipts'},
-              {id:'settings-numbers',label:'Number generation rules', route: '/settings/number-generation'},
               {id:'settings-backup',label:'Backup & restore', route: '/settings/backup'},
               {id:'settings-lang',label:'Language settings', route: '/settings/language'},
             ]},
@@ -746,7 +689,6 @@ function FeedtanApp(initialData) {
               { id: 'admin-users', label: 'Users Management', route: '/admin/users' },
               { id: 'admin-roles', label: 'User roles & permissions', route: '/admin/roles' },
               { id: 'admin-staff-activity', label: 'Staff activity tracking', route: '/admin/audit' },
-              { id: 'admin-staff-performance', label: 'Staff targets & performance', route: '/admin/performance' },
             ]
           },
         ] },
@@ -757,13 +699,6 @@ function FeedtanApp(initialData) {
               { id: 'admin-sessions', label: 'Device/session management', route: '/admin/sessions' },
               { id: 'admin-ip-restrictions', label: 'IP restrictions', route: '/admin/ip-restrictions' },
               { id: 'admin-password-policies', label: 'Password policies', route: '/admin/password-policies' },
-              { id: 'reports-audit', label: 'Audit trails', route: '/reports/audit' },
-              { id: 'admin-encryption', label: 'Data encryption', route: '/admin/encryption' },
-              { id: 'reports-compliance', label: 'Compliance reports', route: '/reports/compliance' },
-              { id: 'admin-kyc', label: 'KYC verification', route: '/admin/kyc' },
-              { id: 'admin-aml', label: 'AML monitoring', route: '/admin/aml' },
-              { id: 'admin-fraud', label: 'Fraud detection alerts', route: '/admin/fraud' },
-              { id: 'admin-regulatory', label: 'Regulatory reporting', route: '/admin/regulatory' },
             ]
           },
         ] },
@@ -784,35 +719,15 @@ function FeedtanApp(initialData) {
           {
             id: 'admin-comm-settings-section', icon: 'fa-solid fa-bullhorn', label: 'Communication Settings', children: [
               { id: 'admin-comm-settings', label: 'SMS & Email Configuration', route: '/admin/settings/communication' },
-              { id: 'admin-reminders', label: 'Payment reminders', route: '/admin/reminders' },
-              { id: 'admin-due-alerts', label: 'Due-date alerts', route: '/admin/due-alerts' },
               { id: 'admin-bulk-sms', label: 'Bulk SMS', route: '/admin/bulk-sms' },
-              { id: 'admin-marketing', label: 'Marketing campaigns', route: '/admin/marketing' },
-              { id: 'admin-receipts', label: 'Auto-generated receipts', route: '/admin/receipts' },
-              { id: 'admin-otp-settings', label: 'OTP settings', route: '/admin/otp-settings' },
             ]
           },
         ] },
       ],
-      member: [
-        { id:'savings-section', items:[
-            { id:'savings', icon:'fa-solid fa-piggy-bank', label:'Savings', children:[
-              {id:'savings-accounts',label:'My Accounts', route: '/savings/accounts'},
-              {id:'savings-deposit',label:'Deposit Request', route: '/savings/deposit'},
-            ]},
-          ]
-        },
-        { id:'loans-section', items:[
-            { id:'loans', icon:'fa-solid fa-hand-holding-dollar', label:'Loans', children:[
-              {id:'loan-apply',label:'Apply for Loan', route: '/loans/apply'},
-              {id:'loan-active',label:'My Active Loans', route: '/loans/active'},
-            ]},
-          ]
-        },
-      ]
     },
 
     async doLogin() {
+      this.isLoading = true;
       try {
         const response = await fetch('/login', {
           method: 'POST',
@@ -860,6 +775,8 @@ function FeedtanApp(initialData) {
         }
       } catch (error) {
         this.showToast('An error occurred during login', 'error');
+      } finally {
+        this.isLoading = false;
       }
     },
 
@@ -916,13 +833,17 @@ function FeedtanApp(initialData) {
       }
 
       if (targetRoute) {
+        this.isLoading = true;
         window.location.href = targetRoute;
         return;
       }
 
       // Fallback for pages not in sidebar or special cases
-      if (page === 'profile') { window.location.href = '/profile'; return; }
-      if (page === 'settings') { window.location.href = '/settings'; return; }
+      if (page === 'profile' || page === 'settings') {
+        this.isLoading = true;
+        window.location.href = page === 'profile' ? '/profile' : '/settings';
+        return;
+      }
       
       this.activePage = page;
       this.sidebarOpen = false;

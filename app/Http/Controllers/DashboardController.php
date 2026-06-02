@@ -66,16 +66,6 @@ class DashboardController extends Controller
         return $this->renderPage('pages.members.statements', 'members-statements');
     }
 
-    public function membersGroups()
-    {
-        return $this->renderPage('pages.members.groups', 'members-groups');
-    }
-
-    public function membersGuarantors()
-    {
-        return $this->renderPage('pages.members.guarantors', 'members-guarantors');
-    }
-
     public function membersDocuments()
     {
         return $this->renderPage('pages.members.documents', 'members-documents');
@@ -84,6 +74,11 @@ class DashboardController extends Controller
     public function membersBlacklisted()
     {
         return $this->renderPage('pages.members.blacklisted', 'members-blacklisted');
+    }
+
+    public function memberTypes()
+    {
+        return $this->renderPage('pages.members.types', 'member-types');
     }
 
     public function savingsPlans()
@@ -101,14 +96,93 @@ class DashboardController extends Controller
         return $this->renderPage('pages.savings.accounts', 'savings-accounts');
     }
 
+    public function loansDashboard()
+    {
+        return $this->renderPage('pages.loans.dashboard', 'loan-dashboard');
+    }
+
     public function loansApply()
     {
-        return $this->renderPage('pages.loans.apply', 'loan-apply');
+        $user = Auth::user();
+        $initialData = $this->getAuthData($user);
+        $initialData['activePage'] = 'loan-apply';
+        
+        return view('pages.loans.apply', [
+            'initialData' => $initialData,
+            'members' => $initialData['members']
+        ]);
+    }
+
+    public function loansStore(Request $request)
+    {
+        $validated = $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'loan_type' => 'required|string',
+            'principal' => 'required|numeric|min:0',
+            'interest_rate' => 'required|numeric|min:0|max:100',
+            'term_months' => 'required|integer|min:1',
+            'purpose' => 'required|string'
+        ]);
+
+        // Generate loan number
+        $loanNo = 'LN-' . date('Y') . '-' . str_pad(Loan::max('id') + 1, 6, '0', STR_PAD_LEFT);
+        
+        // Calculate monthly installment
+        $principal = $validated['principal'];
+        $rate = $validated['interest_rate'] / 100 / 12;
+        $term = $validated['term_months'];
+        $installment = $principal * $rate * pow(1 + $rate, $term) / (pow(1 + $rate, $term) - 1);
+
+        $loan = Loan::create([
+            'member_id' => $validated['member_id'],
+            'loan_no' => $loanNo,
+            'loan_type' => $validated['loan_type'],
+            'principal' => $validated['principal'],
+            'interest_rate' => $validated['interest_rate'],
+            'term_months' => $validated['term_months'],
+            'balance' => $validated['principal'],
+            'installment_amount' => round($installment),
+            'status' => 'pending',
+            'purpose' => $validated['purpose']
+        ]);
+
+        // Log the activity
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'Loan Application Submitted',
+            'module' => 'Loans',
+            'ip_address' => request()->ip(),
+            'success' => true
+        ]);
+
+        return redirect()->route('loans.approval-workflow')->with('success', 'Loan application submitted successfully!');
     }
 
     public function loansActive()
     {
-        return $this->renderPage('pages.loans.active', 'loan-active');
+        $user = Auth::user();
+        $initialData = $this->getAuthData($user);
+        $initialData['activePage'] = 'loan-active';
+        
+        // Get active loans (with pagination)
+        $loans = Loan::whereIn('status', ['active', 'overdue', 'disbursed'])
+                     ->with(['member.user'])
+                     ->orderBy('created_at', 'desc')
+                     ->paginate(10);
+        
+        // Calculate stats
+        $stats = [
+            'active_count' => $loans->whereIn('status', ['active', 'disbursed'])->count(),
+            'total_disbursed' => $loans->sum('principal'),
+            'total_outstanding' => $loans->sum('balance'),
+            'overdue_count' => $loans->where('status', 'overdue')->count()
+        ];
+        
+        return view('pages.loans.active', [
+            'initialData' => $initialData,
+            'loans' => $loans,
+            'stats' => $stats
+        ]);
     }
 
     public function loansRepayments()
@@ -201,81 +275,6 @@ class DashboardController extends Controller
         return $this->renderPage('pages.investments.certificates', 'investments-certificates');
     }
 
-    public function accountingLedger()
-    {
-        return $this->renderPage('pages.accounting.ledger', 'accounting-ledger');
-    }
-
-    public function accountingCashbook()
-    {
-        return $this->renderPage('pages.accounting.cashbook', 'accounting-cashbook');
-    }
-
-    public function accountingJournals()
-    {
-        return $this->renderPage('pages.accounting.journals', 'accounting-journals');
-    }
-
-    public function accountingTrialBalance()
-    {
-        return $this->renderPage('pages.accounting.trial_balance', 'accounting-trial-balance');
-    }
-
-    public function accountingProfitLoss()
-    {
-        return $this->renderPage('pages.accounting.profit_loss', 'accounting-profit-loss');
-    }
-
-    public function accountingBalanceSheet()
-    {
-        return $this->renderPage('pages.accounting.balance_sheet', 'accounting-balance-sheet');
-    }
-
-    public function accountingExpenses()
-    {
-        return $this->renderPage('pages.accounting.expenses', 'accounting-expenses');
-    }
-
-    public function accountingIncome()
-    {
-        return $this->renderPage('pages.accounting.income', 'accounting-income');
-    }
-
-    public function accountingBankRec()
-    {
-        return $this->renderPage('pages.accounting.bank_rec', 'accounting-bank-rec');
-    }
-
-    public function reportsFinancial()
-    {
-        return $this->renderPage('pages.reports.financial', 'reports-financial');
-    }
-
-    public function reportsMembers()
-    {
-        return $this->renderPage('pages.reports.members', 'reports-members');
-    }
-
-    public function reportsSavings()
-    {
-        return $this->renderPage('pages.reports.savings', 'reports-savings');
-    }
-
-    public function reportsLoans()
-    {
-        return $this->renderPage('pages.reports.loans', 'reports-loans');
-    }
-
-    public function reportsAudit()
-    {
-        return $this->renderPage('pages.reports.audit', 'reports-audit');
-    }
-
-    public function reportsRisk()
-    {
-        return $this->renderPage('pages.reports.risk_performance', 'reports-risk');
-    }
-
     public function paymentsMpesa()
     {
         return $this->renderPage('pages.payments.mpesa', 'payments-mpesa');
@@ -311,16 +310,6 @@ class DashboardController extends Controller
         return $this->renderPage('pages.settings.currency', 'settings-currency');
     }
 
-    public function settingsInterest()
-    {
-        return $this->renderPage('pages.settings.interest', 'settings-interest');
-    }
-
-    public function settingsPenalty()
-    {
-        return $this->renderPage('pages.settings.penalty', 'settings-penalty');
-    }
-
     public function settingsFiscalYear()
     {
         return $this->renderPage('pages.settings.fiscal_year', 'settings-fiscal-year');
@@ -329,16 +318,6 @@ class DashboardController extends Controller
     public function settingsBusinessProfile()
     {
         return $this->renderPage('pages.settings.business_profile', 'settings-business-profile');
-    }
-
-    public function settingsTax()
-    {
-        return $this->renderPage('pages.settings.tax', 'settings-tax');
-    }
-
-    public function settingsNumberGeneration()
-    {
-        return $this->renderPage('pages.settings.number_generation', 'settings-number-generation');
     }
 
     public function settingsBackup()
@@ -366,9 +345,9 @@ class DashboardController extends Controller
         return $this->renderPage('pages.admin.roles', 'admin-roles');
     }
 
-    public function adminPerformance()
+    public function adminKyc()
     {
-        return $this->renderPage('pages.admin.performance', 'admin-performance');
+        return $this->renderPage('pages.admin.kyc', 'admin-kyc');
     }
 
     public function adminSessions()
@@ -384,61 +363,6 @@ class DashboardController extends Controller
     public function adminPasswordPolicies()
     {
         return $this->renderPage('pages.admin.password_policies', 'admin-password-policies');
-    }
-
-    public function adminEncryption()
-    {
-        return $this->renderPage('pages.admin.encryption', 'admin-encryption');
-    }
-
-    public function reportsCompliance()
-    {
-        return $this->renderPage('pages.reports.compliance', 'reports-compliance');
-    }
-
-    public function reportsBranchPerformance()
-    {
-        return $this->renderPage('pages.reports.branch_performance', 'reports-branch-performance');
-    }
-
-    public function reportsStaffPerformance()
-    {
-        return $this->renderPage('pages.reports.staff_performance', 'reports-staff-performance');
-    }
-
-    public function reportsDefaulterAnalysis()
-    {
-        return $this->renderPage('pages.reports.defaulter_analysis', 'reports-defaulter-analysis');
-    }
-
-    public function reportsCashflowAnalytics()
-    {
-        return $this->renderPage('pages.reports.cashflow_analytics', 'reports-cashflow-analytics');
-    }
-
-    public function reportsAiInsights()
-    {
-        return $this->renderPage('pages.reports.ai_insights', 'reports-ai-insights');
-    }
-
-    public function adminKyc()
-    {
-        return $this->renderPage('pages.admin.kyc', 'admin-kyc');
-    }
-
-    public function adminAml()
-    {
-        return $this->renderPage('pages.admin.aml', 'admin-aml');
-    }
-
-    public function adminFraud()
-    {
-        return $this->renderPage('pages.admin.fraud', 'admin-fraud');
-    }
-
-    public function adminRegulatory()
-    {
-        return $this->renderPage('pages.admin.regulatory', 'admin-regulatory');
     }
 
     public function adminFailedLogins()
@@ -471,34 +395,9 @@ class DashboardController extends Controller
         return $this->renderPage('pages.admin.suspicious_alerts', 'admin-suspicious-alerts');
     }
 
-    public function adminReminders()
-    {
-        return $this->renderPage('pages.admin.reminders', 'admin-reminders');
-    }
-
-    public function adminDueAlerts()
-    {
-        return $this->renderPage('pages.admin.due_alerts', 'admin-due-alerts');
-    }
-
     public function adminBulkSms()
     {
         return $this->renderPage('pages.admin.bulk_sms', 'admin-bulk-sms');
-    }
-
-    public function adminMarketing()
-    {
-        return $this->renderPage('pages.admin.marketing', 'admin-marketing');
-    }
-
-    public function adminReceipts()
-    {
-        return $this->renderPage('pages.admin.receipts', 'admin-receipts');
-    }
-
-    public function adminOtpSettings()
-    {
-        return $this->renderPage('pages.admin.otp_settings', 'admin-otp-settings');
     }
 
     public function adminAudit()
@@ -536,6 +435,26 @@ class DashboardController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
+            
+            // Check if user is a staff member
+            if (!$user->isAdmin() && !$user->isManager() && !$user->isTeller() && !$user->isAuditor()) {
+                Auth::logout();
+                
+                AuditLog::create([
+                    'user_id' => $user->id,
+                    'action' => 'Failed Login Attempt (Member not allowed)',
+                    'module' => 'Authentication',
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'success' => false
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only staff members are allowed to login to the web portal.',
+                ], 401);
+            }
+            
             $user->update(['last_login_at' => now()]);
             $request->session()->regenerate();
 
@@ -643,39 +562,6 @@ class DashboardController extends Controller
             'success' => true
         ]);
 
-        return response()->json(['success' => true]);
-    }
-
-    public function updateMarketing(Request $request)
-    {
-        // Implementation for marketing campaigns
-        return response()->json(['success' => true]);
-    }
-
-    public function updateReceipts(Request $request)
-    {
-        $settings = $request->all();
-        foreach ($settings as $key => $value) {
-            SystemSetting::set($key, $value, 'receipts');
-        }
-        return response()->json(['success' => true]);
-    }
-
-    public function updateOtpSettings(Request $request)
-    {
-        $settings = $request->all();
-        foreach ($settings as $key => $value) {
-            SystemSetting::set($key, $value, 'otp');
-        }
-        return response()->json(['success' => true]);
-    }
-
-    public function updateReminders(Request $request)
-    {
-        $settings = $request->all();
-        foreach ($settings as $key => $value) {
-            SystemSetting::set($key, $value, 'reminders');
-        }
         return response()->json(['success' => true]);
     }
 
@@ -918,6 +804,7 @@ class DashboardController extends Controller
             'activeLoans' => [],
             'savingsAccounts' => [],
             'systemSettings' => (object)[],
+            'isLoading' => false,
         ];
     }
 
@@ -926,49 +813,34 @@ class DashboardController extends Controller
         $data = [
             'loggedIn' => true,
             'currentUser' => $user,
+            'isLoading' => false,
         ];
 
-        if ($user->isAdmin() || $user->isManager() || $user->isTeller() || $user->isAuditor()) {
-            // Admin/Staff view - see everything
-            $data['members'] = Member::with(['user', 'savingsAccounts', 'loans'])->get()->map(function($m) {
-                $m->total_savings = $m->savingsAccounts->sum('balance');
-                $m->total_loans = $m->loans->where('status', 'active')->sum('balance');
-                return $m;
-            });
-            $data['recentTransactions'] = Transaction::with(['member.user', 'savingsAccount', 'loan'])->latest()->take(15)->get();
-            $data['activeLoans'] = Loan::with('member.user')->where('status', 'active')->get();
-            $data['pendingLoans'] = Loan::with('member.user')->where('status', 'pending')->get();
-            $data['savingsAccounts'] = SavingsAccount::with('member.user')->get();
-            $data['systemUsers'] = User::all();
-            $data['systemSettings'] = SystemSetting::all()->groupBy('group');
-            $data['auditLogs'] = AuditLog::with('user')->latest()->take(50)->get()->map(function($log) {
-                $log->user_name = $log->user ? $log->user->name : 'System/Guest';
-                $log->time = $log->created_at->diffForHumans();
-                return $log;
-            });
-            $data['failedLogins'] = AuditLog::where('action', 'Failed Login Attempt')->latest()->take(50)->get()->map(function($log) {
-                $log->time = $log->created_at->diffForHumans();
-                return $log;
-            });
-            $data['ipRestrictions'] = IpRestriction::with('addedBy')->get();
-            $data['kycVerifications'] = KycVerification::with(['member.user', 'verifiedBy'])->latest()->get();
-            $data['amlAlerts'] = AmlAlert::with(['member.user', 'transaction'])->latest()->get();
-            $data['activeSessions'] = \DB::table('sessions')->join('users', 'sessions.user_id', '=', 'users.id')->select('sessions.*', 'users.name', 'users.email')->get();
-        } else {
-            // Member view - only their own data
-            $member = Member::with(['user', 'savingsAccounts', 'loans', 'transactions'])->where('user_id', $user->id)->first();
-            if ($member) {
-                $data['memberProfile'] = $member;
-                $data['memberAccounts'] = $member->savingsAccounts;
-                $data['memberLoans'] = $member->loans;
-                $data['memberTransactions'] = $member->transactions()->latest()->take(10)->get();
-                
-                // For compatibility with the frontend variables
-                $data['recentTransactions'] = $data['memberTransactions'];
-                $data['activeLoans'] = $member->loans()->where('status', 'active')->get();
-                $data['savingsAccounts'] = SavingsAccount::with('member.user')->where('member_id', $member->id)->get();
-            }
-        }
+        // Admin/Staff view - see everything
+        $data['members'] = Member::with(['user', 'savingsAccounts', 'loans'])->get()->map(function($m) {
+            $m->total_savings = $m->savingsAccounts->sum('balance');
+            $m->total_loans = $m->loans->where('status', 'active')->sum('balance');
+            return $m;
+        });
+        $data['recentTransactions'] = Transaction::with(['member.user', 'savingsAccount', 'loan'])->latest()->take(15)->get();
+        $data['activeLoans'] = Loan::with('member.user')->where('status', 'active')->get();
+        $data['pendingLoans'] = Loan::with('member.user')->where('status', 'pending')->get();
+        $data['savingsAccounts'] = SavingsAccount::with('member.user')->get();
+        $data['systemUsers'] = User::all();
+        $data['systemSettings'] = SystemSetting::all()->groupBy('group');
+        $data['auditLogs'] = AuditLog::with('user')->latest()->take(50)->get()->map(function($log) {
+            $log->user_name = $log->user ? $log->user->name : 'System/Guest';
+            $log->time = $log->created_at->diffForHumans();
+            return $log;
+        });
+        $data['failedLogins'] = AuditLog::where('action', 'Failed Login Attempt')->latest()->take(50)->get()->map(function($log) {
+            $log->time = $log->created_at->diffForHumans();
+            return $log;
+        });
+        $data['ipRestrictions'] = IpRestriction::with('addedBy')->get();
+        $data['kycVerifications'] = KycVerification::with(['member.user', 'verifiedBy'])->latest()->get();
+        $data['amlAlerts'] = AmlAlert::with(['member.user', 'transaction'])->latest()->get();
+        $data['activeSessions'] = \DB::table('sessions')->join('users', 'sessions.user_id', '=', 'users.id')->select('sessions.*', 'users.name', 'users.email')->get();
 
         return $data;
     }

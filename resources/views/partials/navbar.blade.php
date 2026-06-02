@@ -11,7 +11,7 @@
       <i class="fa-solid fa-bars text-sm"></i>
     </button>
     <div class="hidden sm:flex items-center gap-2">
-      <span class="text-xs font-medium" :class="darkMode?'text-primary-400':'text-primary-500'">FEEDTAN MICROFINANCE</span>
+      <span class="text-xs font-medium" :class="darkMode?'text-primary-400':'text-primary-500'">FEEDTAN Management Information System</span>
       <i class="fa-solid fa-chevron-right text-[10px]" :class="darkMode?'text-primary-700':'text-primary-300'"></i>
       <span class="text-xs font-semibold" :class="darkMode?'text-primary-200':'text-primary-800'" x-text="getPageTitle()"></span>
     </div>

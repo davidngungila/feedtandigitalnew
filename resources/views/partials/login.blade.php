@@ -15,8 +15,8 @@
         <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-600 mb-4 shadow-lg">
           <i class="fa-solid fa-leaf text-white text-2xl"></i>
         </div>
-        <h1 class="text-2xl font-bold" :class="darkMode?'text-white':'text-primary-900'">FEEDTAN MICROFINANCE</h1>
-        <p class="text-sm mt-1" :class="darkMode?'text-primary-300':'text-primary-600'">Group Management System</p>
+        <h1 class="text-2xl font-bold" :class="darkMode?'text-white':'text-primary-900'">FEEDTAN</h1>
+        <p class="text-sm mt-1" :class="darkMode?'text-primary-300':'text-primary-600'">Management Information System</p>
       </div>
 
       <!-- Login form -->
@@ -26,7 +26,7 @@
           <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Email Address</label>
           <div class="relative">
             <i class="fa-solid fa-envelope absolute left-3 top-1/2 -translate-y-1/2 text-sm" :class="darkMode?'text-primary-400':'text-primary-500'"></i>
-            <input type="email" x-model="loginEmail" required placeholder="admin@feedtan.co.tz"
+            <input type="email" x-model="loginEmail" required placeholder="your.email@example.com"
                    class="form-input input-field pl-9"
                    :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200 text-primary-900'"/>
           </div>
@@ -44,25 +44,13 @@
         </div>
 
         <!-- Login Button -->
-        <button type="submit" class="w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary-900/30 active:scale-95">
-          <i class="fa-solid fa-right-to-bracket mr-2"></i> Sign In
+        <button type="submit" :disabled="isLoading" class="w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold text-sm transition-all duration-200 hover:shadow-lg hover:shadow-primary-900/30 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed">
+          <i :class="isLoading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-right-to-bracket'" class="mr-2"></i> 
+          <span x-text="isLoading ? 'Signing In...' : 'Sign In'"></span>
         </button>
       </form>
 
-      <!-- Demo accounts (for testing) -->
-      <div class="mt-5 p-3 rounded-xl" :class="darkMode?'bg-primary-900/30 border border-primary-900':'bg-primary-50 border border-primary-100'">
-        <p class="text-xs font-bold mb-2" :class="darkMode?'text-primary-300':'text-primary-700'">Test Credentials (password: 'password'):</p>
-        <div class="grid grid-cols-1 gap-1">
-          <button @click="loginEmail='admin@feedtan.co.tz';loginPassword='password';doLogin()" class="text-xs py-1 px-2 rounded-lg text-left transition-colors"
-                  :class="darkMode?'hover:bg-primary-800 text-primary-300':'hover:bg-primary-100 text-primary-700'">
-            Admin: admin@feedtan.co.tz
-          </button>
-          <button @click="loginEmail='member@feedtan.co.tz';loginPassword='password';doLogin()" class="text-xs py-1 px-2 rounded-lg text-left transition-colors"
-                  :class="darkMode?'hover:bg-primary-800 text-primary-300':'hover:bg-primary-100 text-primary-700'">
-            Member: member@feedtan.co.tz
-          </button>
-        </div>
-      </div>
+
 
       <!-- Dark mode toggle -->
       <div class="mt-4 flex justify-center">
