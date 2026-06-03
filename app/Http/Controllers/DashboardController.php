@@ -61,6 +61,40 @@ class DashboardController extends Controller
         return $this->renderPage('pages.profile', 'profile');
     }
 
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
+            'phone' => 'sometimes|nullable|string|max:20',
+            'profile_image' => 'sometimes|nullable|image|max:2048', // 2MB max
+        ]);
+
+        // Handle image upload
+        if ($request->hasFile('profile_image')) {
+            // Delete old image if exists
+            if ($user->profile_image && file_exists(public_path($user->profile_image))) {
+                unlink(public_path($user->profile_image));
+            }
+            $path = $request->file('profile_image')->store('profile-images', 'public');
+            $validated['profile_image'] = 'storage/' . $path;
+        }
+
+        $user->update($validated);
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Profile Updated',
+            'module' => 'Profile',
+            'ip_address' => $request->ip(),
+            'success' => true
+        ]);
+
+        return response()->json(['success' => true, 'user' => $user]);
+    }
+
     public function membersStatements()
     {
         return $this->renderPage('pages.members.statements', 'members-statements');

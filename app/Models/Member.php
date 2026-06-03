@@ -20,9 +20,19 @@ class Member extends Model
         'district',
         'ward',
         'street',
+        'po_box',
         'membership_type',
         'status',
         'joined_at',
+        'gender',
+        'dob',
+        'marital_status',
+        'branch',
+        'next_of_kin_name',
+        'next_of_kin_relationship',
+        'next_of_kin_phone',
+        'passport_photo',
+        'nida_card',
     ];
 
     protected $casts = [

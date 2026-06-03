@@ -11,6 +11,7 @@ use App\Http\Controllers\StatementController;
 use App\Http\Controllers\SavingsReportController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MemberPortalController;
+use App\Http\Controllers\MemberController;
 
 Route::get('/', [DashboardController::class, 'index']);
 Route::get('/login', [DashboardController::class, 'showLogin'])->name('login');
@@ -19,14 +20,22 @@ Route::post('/logout', [DashboardController::class, 'logout'])->name('do-logout'
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
-    Route::get('/members/active', [DashboardController::class, 'membersActive'])->name('members.active');
-    Route::get('/members/register', [DashboardController::class, 'membersRegister'])->name('members.register');
-    Route::get('/members/profile', [DashboardController::class, 'membersProfile'])->name('members.profile');
+    Route::get('/members/active', [MemberController::class, 'active'])->name('members.active');
+    Route::get('/members/register', [MemberController::class, 'register'])->name('members.register');
+    Route::post('/members', [MemberController::class, 'store'])->name('members.store');
+    Route::get('/members/{member}/profile', [MemberController::class, 'profile'])->name('members.profile');
+    Route::put('/members/{member}', [MemberController::class, 'update'])->name('members.update');
+    Route::delete('/members/{member}', [MemberController::class, 'destroy'])->name('members.destroy');
     Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
-    Route::get('/members/statements', [DashboardController::class, 'membersStatements'])->name('members.statements');
-    Route::get('/members/documents', [DashboardController::class, 'membersDocuments'])->name('members.documents');
-    Route::get('/members/blacklisted', [DashboardController::class, 'membersBlacklisted'])->name('members.blacklisted');
-    Route::get('/members/types', [DashboardController::class, 'memberTypes'])->name('members.types');
+    Route::post('/profile/update', [DashboardController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/members/statements', [MemberController::class, 'statements'])->name('members.statements');
+    Route::get('/members/documents', [MemberController::class, 'documents'])->name('members.documents');
+    Route::get('/members/blacklisted', [MemberController::class, 'blacklisted'])->name('members.blacklisted');
+    Route::get('/members/types', [MemberController::class, 'types'])->name('members.types');
+    Route::get('/members/types/{memberType}', [MemberController::class, 'showType'])->name('members.types.show');
+    Route::post('/members/types', [MemberController::class, 'storeType'])->name('members.types.store');
+    Route::put('/members/types/{memberType}', [MemberController::class, 'updateType'])->name('members.types.update');
+    Route::delete('/members/types/{memberType}', [MemberController::class, 'destroyType'])->name('members.types.destroy');
     
     // Savings & Deposits
     Route::prefix('savings')->name('savings.')->group(function () {

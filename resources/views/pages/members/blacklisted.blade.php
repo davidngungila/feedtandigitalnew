@@ -16,30 +16,37 @@
           <tr>
             <th class="text-left">Member Name</th>
             <th class="text-left">Member ID</th>
-            <th class="text-left">Reason</th>
-            <th class="text-left">Date Blacklisted</th>
-            <th class="text-left">Blacklisted By</th>
+            <th class="text-left">Status</th>
+            <th class="text-left">Date Joined</th>
             <th class="text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr class="table-row">
-            <td>
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold">SM</div>
-                <span class="text-xs font-semibold">Said Musa</span>
-              </div>
-            </td>
-            <td class="text-xs font-mono">MEM-8821</td>
-            <td class="text-xs">Multiple defaults and fraud attempt</td>
-            <td class="text-xs">15 Jan 2026</td>
-            <td class="text-xs">Admin</td>
-            <td>
-              <button class="text-primary-600 hover:underline text-xs font-bold">View History</button>
-              <span class="mx-1">|</span>
-              <button class="text-red-500 hover:underline text-xs font-bold">Whitelist</button>
-            </td>
-          </tr>
+          <template x-if="blacklisted && blacklisted.length > 0">
+            <template x-for="member in blacklisted" :key="member.id">
+              <tr class="table-row">
+                <td>
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold" x-text="member.user ? member.user.name.charAt(0).toUpperCase() : '?'"></div>
+                    <span class="text-xs font-semibold" x-text="member.user ? member.user.name : 'Unknown'"></span>
+                  </div>
+                </td>
+                <td class="text-xs font-mono" x-text="member.member_no"></td>
+                <td><span class="badge badge-red" x-text="member.status"></span></td>
+                <td class="text-xs" x-text="member.joined_at ? new Date(member.joined_at).toLocaleDateString() : ''"></td>
+                <td>
+                  <button class="text-primary-600 hover:underline text-xs font-bold">View History</button>
+                  <span class="mx-1">|</span>
+                  <button class="text-green-500 hover:underline text-xs font-bold">Whitelist</button>
+                </td>
+              </tr>
+            </template>
+          </template>
+          <template x-if="!blacklisted || blacklisted.length === 0">
+            <tr>
+              <td colspan="5" class="text-center py-12 text-gray-500 text-xs">No blacklisted members</td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>

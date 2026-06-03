@@ -6,7 +6,7 @@
             :class="darkMode?'text-primary-300 hover:bg-primary-900':'text-primary-700 hover:bg-primary-50'">
       <i class="fa-solid fa-bars text-sm"></i>
     </button>
-    <button @click="sidebarCollapsed=!sidebarCollapsed" class="p-2 rounded-lg transition-colors hidden lg:block"
+    <button @click="sidebarCollapsed=!sidebarCollapsed; localStorage.setItem('feedtan_sidebar_collapsed', sidebarCollapsed);" class="p-2 rounded-lg transition-colors hidden lg:block"
             :class="darkMode?'text-primary-300 hover:bg-primary-900':'text-primary-700 hover:bg-primary-50'">
       <i class="fa-solid fa-bars text-sm"></i>
     </button>
@@ -35,10 +35,7 @@
       <i :class="darkMode?'fa-solid fa-sun':'fa-solid fa-moon'" class="text-xs sm:text-sm"></i>
     </button>
 
-    <!-- Quick Actions -->
-    <button @click="showModal('quickAction')" class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-[10px] sm:text-xs font-semibold transition-all">
-      <i class="fa-solid fa-plus"></i><span class="hidden sm:inline">Quick Action</span>
-    </button>
+
 
     <!-- Notifications -->
     <div class="relative" x-data="{open:false}">
@@ -87,7 +84,7 @@
               :class="darkMode?'hover:bg-primary-900/50':'hover:bg-primary-100'">
         <div class="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-primary-400 to-primary-700 flex items-center justify-center text-white font-bold text-sm">
           <template x-if="currentUser.profile_image">
-            <img :src="currentUser.profile_image" class="w-full h-full object-cover">
+            <img :src="(currentUser.profile_image.startsWith('http') || currentUser.profile_image.startsWith('data:image')) ? currentUser.profile_image : `/${currentUser.profile_image}`" class="w-full h-full object-cover">
           </template>
           <template x-if="!currentUser.profile_image">
             <span x-text="currentUser.name ? currentUser.name.charAt(0) : ''"></span>

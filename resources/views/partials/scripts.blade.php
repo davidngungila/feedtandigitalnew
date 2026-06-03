@@ -12,7 +12,7 @@ function FeedtanApp(initialData) {
     
     darkMode: localStorage.getItem('feedtan_dark') === 'true',
     sidebarOpen: false,
-    sidebarCollapsed: false,
+    sidebarCollapsed: localStorage.getItem('feedtan_sidebar_collapsed') === 'true',
     activePage: initialData.activePage || 'dashboard',
     isLoading: initialData.isLoading ?? false,
     activeModal: null,
@@ -114,7 +114,49 @@ function FeedtanApp(initialData) {
     otpSettings: (initialData.systemSettings && initialData.systemSettings.otp) ? initialData.systemSettings.otp : { sms: true, email: true, app: true, expiry: 10, retries: 3, length: 6 },
     reminders: (initialData.systemSettings && initialData.systemSettings.reminders) ? initialData.systemSettings.reminders : [],
     userForm: { id: null, name: '', email: '', password: '', role: 'teller', branch: '', phone: '', is_active: true },
+    memberForm: { 
+      id: null, 
+      name: '', 
+      email: '', 
+      phone: '', 
+      nida: '', 
+      gender: '', 
+      dob: '', 
+      marital_status: '', 
+      occupation: '', 
+      employer: '', 
+      region: 'Dar es Salaam', 
+      district: '', 
+      ward: '', 
+      street: '', 
+      po_box: '', 
+      membership_type: 'Regular', 
+      branch: 'Dar es Salaam HQ', 
+      next_of_kin_name: '', 
+      next_of_kin_relationship: '', 
+      next_of_kin_phone: '', 
+      status: 'Active' 
+    },
     ipForm: { label: '', ip_address: '' },
+    selectedMember: null,
+    selectedMemberToDelete: null,
+    deleteReason: '',
+    memberTypes: initialData.memberTypes || [],
+    documents: initialData.documents || [],
+    blacklisted: initialData.blacklisted || [],
+    selectedMemberType: null,
+    selectedMemberTypeToDelete: null,
+    memberTypeForm: {
+        id: null,
+        name: '',
+        description: '',
+        status: 'Active',
+    },
+    memberPhoto: null,
+    memberPhotoPreview: null,
+    memberNidaCard: null,
+    memberNidaCardPreview: null,
+    profileForm: { name: '', email: '', phone: '', profile_image: null },
     kycUpdateForm: { id: null, status: 'Approved', notes: '' },
     amlUpdateForm: { id: null, status: 'Resolved' },
     settingsForm: {},
@@ -224,6 +266,349 @@ function FeedtanApp(initialData) {
         }
       } catch (e) {
         this.showToast('Error deleting user', 'error');
+      }
+    },
+
+    resetMemberForm() {
+      this.memberForm = { 
+        id: null, 
+        name: '', 
+        email: '', 
+        phone: '', 
+        nida: '', 
+        gender: '', 
+        dob: '', 
+        marital_status: '', 
+        occupation: '', 
+        employer: '', 
+        region: 'Dar es Salaam', 
+        district: '', 
+        ward: '', 
+        street: '', 
+        po_box: '', 
+        membership_type: 'Regular', 
+        branch: 'Dar es Salaam HQ', 
+        next_of_kin_name: '', 
+        next_of_kin_relationship: '', 
+        next_of_kin_phone: '', 
+        status: 'Active' 
+      };
+      this.memberPhoto = null;
+      this.memberPhotoPreview = null;
+      this.memberNidaCard = null;
+      this.memberNidaCardPreview = null;
+    },
+
+    async saveMember() {
+      try {
+        const formData = new FormData();
+        Object.keys(this.memberForm).forEach(key => {
+          if (this.memberForm[key] !== null && this.memberForm[key] !== undefined) {
+            formData.append(key, this.memberForm[key]);
+          }
+        });
+        const response = await fetch('/members', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.members.push(result.member);
+          this.activeModal = null;
+          this.resetMemberForm();
+          this.showToast('Member registered successfully', 'success');
+        } else {
+          this.showToast(result.message || 'Error registering member', 'error');
+        }
+      } catch (e) {
+        this.showToast('Server error occurred', 'error');
+      }
+    },
+
+    editMember(member) {
+      this.memberForm = {
+        id: member.id,
+        name: member.user ? member.user.name : '',
+        email: member.user ? member.user.email : '',
+        phone: member.phone || '',
+        nida: member.nida || '',
+        gender: member.gender || '',
+        dob: member.dob || '',
+        marital_status: member.marital_status || '',
+        occupation: member.occupation || '',
+        employer: member.employer || '',
+        region: member.region || 'Dar es Salaam',
+        district: member.district || '',
+        ward: member.ward || '',
+        street: member.street || '',
+        po_box: member.po_box || '',
+        membership_type: member.membership_type || 'Regular',
+        branch: member.branch || 'Dar es Salaam HQ',
+        next_of_kin_name: member.next_of_kin_name || '',
+        next_of_kin_relationship: member.next_of_kin_relationship || '',
+        next_of_kin_phone: member.next_of_kin_phone || '',
+        status: member.status || 'Active'
+      };
+      this.memberPhotoPreview = member.passport_photo || null;
+      this.memberNidaCardPreview = member.nida_card || null;
+      this.memberPhoto = null;
+      this.memberNidaCard = null;
+      this.activeModal = 'editMember';
+    },
+
+    async updateMember() {
+      try {
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        Object.keys(this.memberForm).forEach(key => {
+          if (this.memberForm[key] !== null && this.memberForm[key] !== undefined) {
+            formData.append(key, this.memberForm[key]);
+          }
+        });
+        if (this.memberPhoto) {
+          formData.append('passport_photo', this.memberPhoto);
+        }
+        if (this.memberNidaCard) {
+          formData.append('nida_card', this.memberNidaCard);
+        }
+        const response = await fetch(`/members/${this.memberForm.id}`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          const idx = this.members.findIndex(m => m.id === result.member.id);
+          if (idx !== -1) this.members[idx] = result.member;
+          this.activeModal = null;
+          this.resetMemberForm();
+          this.showToast('Member updated successfully', 'success');
+        } else {
+          this.showToast(result.message || 'Error updating member', 'error');
+        }
+      } catch (e) {
+        this.showToast('Server error occurred', 'error');
+      }
+    },
+
+    viewMember(member) {
+      this.selectedMember = member;
+      this.activeModal = 'viewMember';
+    },
+    async deleteMember(member) {
+      this.selectedMemberToDelete = member;
+      this.activeModal = 'deleteMember';
+    },
+    async confirmDeleteMember() {
+      if (!this.selectedMemberToDelete || !this.deleteReason) return;
+      try {
+        const formData = new FormData();
+        formData.append('reason', this.deleteReason);
+        formData.append('_method', 'DELETE');
+        
+        const response = await fetch(`/members/${this.selectedMemberToDelete.id}`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.members = this.members.filter(m => m.id !== this.selectedMemberToDelete.id);
+          this.showToast('Member deleted successfully', 'success');
+        }
+        this.activeModal = null;
+        this.selectedMemberToDelete = null;
+        this.deleteReason = '';
+      } catch (e) {
+        this.showToast('Error deleting member', 'error');
+        this.activeModal = null;
+        this.selectedMemberToDelete = null;
+        this.deleteReason = '';
+      }
+    },
+    resetMemberTypeForm() {
+      this.memberTypeForm = {
+        id: null,
+        name: '',
+        description: '',
+        status: 'Active',
+      };
+      this.selectedMemberType = null;
+      this.selectedMemberTypeToDelete = null;
+    },
+    viewMemberType(type) {
+      this.selectedMemberType = type;
+      this.activeModal = 'viewMemberType';
+    },
+    editMemberType(type) {
+      this.memberTypeForm = {
+        id: type.id,
+        name: type.name,
+        description: type.description || '',
+        status: type.status || 'Active',
+      };
+      this.activeModal = 'editMemberType';
+    },
+    async saveMemberType() {
+      try {
+        const formData = new FormData();
+        formData.append('name', this.memberTypeForm.name);
+        formData.append('description', this.memberTypeForm.description);
+        formData.append('status', this.memberTypeForm.status);
+        
+        const response = await fetch('/members/types', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.memberTypes.push(result.type);
+          this.activeModal = null;
+          this.resetMemberTypeForm();
+          this.showToast('Member type added successfully', 'success');
+        } else {
+          this.showToast(result.message || 'Error adding member type', 'error');
+        }
+      } catch (e) {
+        this.showToast('Server error occurred', 'error');
+      }
+    },
+    async updateMemberType() {
+      try {
+        const formData = new FormData();
+        formData.append('_method', 'PUT');
+        formData.append('name', this.memberTypeForm.name);
+        formData.append('description', this.memberTypeForm.description);
+        formData.append('status', this.memberTypeForm.status);
+        
+        const response = await fetch(`/members/types/${this.memberTypeForm.id}`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          const index = this.memberTypes.findIndex(t => t.id === result.type.id);
+          if (index !== -1) {
+            this.memberTypes[index] = result.type;
+          }
+          this.activeModal = null;
+          this.resetMemberTypeForm();
+          this.showToast('Member type updated successfully', 'success');
+        } else {
+          this.showToast(result.message || 'Error updating member type', 'error');
+        }
+      } catch (e) {
+        this.showToast('Server error occurred', 'error');
+      }
+    },
+    deleteMemberType(type) {
+      this.selectedMemberTypeToDelete = type;
+      this.activeModal = 'deleteMemberType';
+    },
+    async confirmDeleteMemberType() {
+      if (!this.selectedMemberTypeToDelete) return;
+      try {
+        const formData = new FormData();
+        formData.append('_method', 'DELETE');
+        
+        const response = await fetch(`/members/types/${this.selectedMemberTypeToDelete.id}`, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.memberTypes = this.memberTypes.filter(t => t.id !== this.selectedMemberTypeToDelete.id);
+          this.showToast('Member type deleted successfully', 'success');
+        }
+        this.activeModal = null;
+        this.resetMemberTypeForm();
+      } catch (e) {
+        this.showToast('Error deleting member type', 'error');
+        this.activeModal = null;
+        this.resetMemberTypeForm();
+      }
+    },
+    uploadedImage: null,
+    handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.uploadedImage = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.profileForm.profile_image = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    handleMemberPhoto(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.memberPhoto = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.memberPhotoPreview = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    handleMemberNidaCard(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.memberNidaCard = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.memberNidaCardPreview = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    async updateProfile() {
+      try {
+        const formData = new FormData();
+        formData.append('name', this.profileForm.name);
+        formData.append('email', this.profileForm.email);
+        formData.append('phone', this.profileForm.phone);
+        
+        if (this.uploadedImage) {
+          formData.append('profile_image', this.uploadedImage);
+        }
+        
+        const response = await fetch('/profile/update', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.currentUser = result.user;
+          if (result.user.profile_image) {
+            this.profileForm.profile_image = result.user.profile_image;
+          }
+          this.uploadedImage = null;
+          this.showToast('Profile updated successfully', 'success');
+        } else {
+          this.showToast(result.message || 'Error updating profile', 'error');
+        }
+      } catch (e) {
+        this.showToast('Server error occurred', 'error');
       }
     },
 

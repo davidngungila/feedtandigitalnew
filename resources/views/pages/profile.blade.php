@@ -4,7 +4,15 @@
 <!-- ============================================================
      MY PROFILE PAGE
      ============================================================ -->
-<div x-data="{ profileTab: 'personal' }" class="animate-[fadeIn_0.4s_ease] space-y-6">
+<div x-data="{ profileTab: 'personal' }" 
+     x-init="
+       profileForm = {
+         name: currentUser.name,
+         email: currentUser.email,
+         phone: currentUser.phone,
+         profile_image: currentUser.profile_image
+       }" 
+     class="animate-[fadeIn_0.4s_ease] space-y-6">
   
   <!-- Profile Header Card -->
   <div class="card rounded-2xl overflow-hidden">
@@ -18,18 +26,22 @@
       <div class="flex flex-col md:flex-row md:items-end gap-6 -mt-12">
         <!-- Avatar -->
         <div class="relative group">
-          <div class="w-32 h-32 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 border-4 shadow-xl flex items-center justify-center text-white text-4xl font-bold flex-shrink-0"
+          <div class="w-32 h-32 rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 border-4 shadow-xl flex items-center justify-center text-white text-4xl font-bold flex-shrink-0 overflow-hidden"
                :class="darkMode ? 'border-[#0d1f16]' : 'border-white'">
-            <template x-if="currentUser.profile_image">
-              <img :src="currentUser.profile_image" class="w-full h-full object-cover rounded-xl">
+            <template x-if="profileForm.profile_image">
+              <img :src="(profileForm.profile_image.startsWith('data:image') || profileForm.profile_image.startsWith('http')) ? profileForm.profile_image : `/${profileForm.profile_image}`" class="w-full h-full object-cover">
             </template>
-            <template x-if="!currentUser.profile_image">
+            <template x-if="!profileForm.profile_image">
               <span x-text="currentUser.name ? currentUser.name.charAt(0) : ''"></span>
             </template>
           </div>
-          <button class="absolute bottom-2 right-2 w-8 h-8 rounded-lg bg-primary-600 text-white shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <label class="absolute bottom-2 right-2 w-8 h-8 rounded-lg bg-primary-600 text-white shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
             <i class="fa-solid fa-camera text-xs"></i>
-          </button>
+            <input type="file" 
+                   class="hidden" 
+                   accept="image/*"
+                   @change="handleImageUpload($event)">
+          </label>
         </div>
 
         <!-- User Info -->
@@ -87,15 +99,15 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="form-label">Full Name</label>
-              <input type="text" x-model="currentUser.name" class="form-input input-field" :class="darkMode ? 'bg-[#0a140e] border-[#1a3328]' : ''">
+              <input type="text" x-model="profileForm.name" class="form-input input-field" :class="darkMode ? 'bg-[#0a140e] border-[#1a3328]' : ''">
             </div>
             <div>
               <label class="form-label">Email Address</label>
-              <input type="email" x-model="currentUser.email" class="form-input input-field" disabled :class="darkMode ? 'bg-[#0a140e] border-[#1a3328] opacity-50' : 'bg-gray-50 opacity-50'">
+              <input type="email" x-model="profileForm.email" class="form-input input-field" disabled :class="darkMode ? 'bg-[#0a140e] border-[#1a3328] opacity-50' : 'bg-gray-50 opacity-50'">
             </div>
             <div>
               <label class="form-label">Phone Number</label>
-              <input type="text" value="+255 754 123 456" class="form-input input-field" :class="darkMode ? 'bg-[#0a140e] border-[#1a3328]' : ''">
+              <input type="text" x-model="profileForm.phone" class="form-input input-field" :class="darkMode ? 'bg-[#0a140e] border-[#1a3328]' : ''">
             </div>
             <div>
               <label class="form-label">Gender</label>
@@ -111,7 +123,7 @@
             <textarea class="form-input input-field h-24" :class="darkMode ? 'bg-[#0a140e] border-[#1a3328]' : ''">Mbagala Kuu, Dar es Salaam, Tanzania</textarea>
           </div>
           <div class="mt-6 flex justify-end">
-            <button @click="showToast('Profile updated successfully!', 'success')" class="px-6 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold transition-all">
+            <button @click="updateProfile()" class="px-6 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold transition-all">
               Save Changes
             </button>
           </div>

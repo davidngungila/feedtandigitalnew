@@ -65,8 +65,14 @@
             <tr class="table-row" x-show="i < memberPage*15 && i >= (memberPage-1)*15">
               <td>
                 <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                       x-text="m.user ? m.user.name.charAt(0) : '?'"></div>
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                    <template x-if="m.passport_photo">
+                      <img :src="'/storage/' + m.passport_photo.replace('storage/', '')" class="w-full h-full object-cover" alt="">
+                    </template>
+                    <template x-if="!m.passport_photo">
+                      <span x-text="m.user ? m.user.name.charAt(0) : '?'"></span>
+                    </template>
+                  </div>
                   <div>
                     <p class="font-semibold text-xs" :class="darkMode?'text-white':'text-primary-900'" x-text="m.user ? m.user.name : 'Unknown'"></p>
                     <p class="text-[11px]" :class="darkMode?'text-primary-400':'text-gray-500'" x-text="m.phone"></p>
@@ -82,14 +88,14 @@
               <td><span class="badge" :class="m.status==='Active'?'badge-green':m.status==='Inactive'?'badge-red':'badge-yellow'" x-text="m.status"></span></td>
               <td>
                 <div class="flex items-center gap-1">
-                  <button @click="navigate('member-profile')" class="p-1.5 rounded-lg text-primary-500 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-[11px] transition-colors" title="View">
+                  <button @click="viewMember(m)" class="p-1.5 rounded-lg text-primary-500 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-[11px] transition-colors" title="View">
                     <i class="fa-solid fa-eye"></i>
                   </button>
-                  <button class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-[11px] transition-colors" title="Edit">
+                  <button @click="editMember(m)" class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-[11px] transition-colors" title="Edit">
                     <i class="fa-solid fa-pen"></i>
                   </button>
-                  <button class="p-1.5 rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 text-[11px] transition-colors" title="Disable">
-                    <i class="fa-solid fa-ban"></i>
+                  <button @click="deleteMember(m)" class="p-1.5 rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 text-[11px] transition-colors" title="Delete">
+                    <i class="fa-solid fa-trash"></i>
                   </button>
                 </div>
               </td>

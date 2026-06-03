@@ -22,28 +22,35 @@
           <tr>
             <th class="text-left">Name</th>
             <th class="text-left">Description</th>
+            <th class="text-left">Members</th>
             <th class="text-left">Status</th>
             <th class="text-left">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <template x-for="(type, i) in [
-            {id:1, name:'Regular', description:'Standard member type', status:'Active'},
-            {id:2, name:'Group', description:'Group/association membership', status:'Active'},
-            {id:3, name:'Junior', description:'Youth/student membership', status:'Active'}
-          ]" :key="type.id">
+          <template x-for="type in memberTypes" :key="type.id">
             <tr class="table-row">
               <td>
                 <p class="font-semibold text-xs" :class="darkMode?'text-white':'text-primary-900'" x-text="type.name"></p>
               </td>
-              <td class="text-xs" :class="darkMode?'text-primary-300':'text-gray-600'" x-text="type.description"></td>
-              <td><span class="badge badge-green" x-text="type.status"></span></td>
+              <td class="text-xs" :class="darkMode?'text-primary-300':'text-gray-600'" x-text="type.description || 'No description'"></td>
+              <td class="text-xs" :class="darkMode?'text-primary-300':'text-gray-600'" x-text="type.count || 0"></td>
+              <td>
+                <span 
+                  class="badge" 
+                  :class="type.status === 'Active' ? 'badge-green' : 'badge-red'" 
+                  x-text="type.status"
+                ></span>
+              </td>
               <td>
                 <div class="flex items-center gap-1">
-                  <button class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-[11px] transition-colors" title="Edit">
+                  <a :href="'/members/types/' + type.id" class="p-1.5 rounded-lg text-primary-500 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-[11px] transition-colors" title="View">
+                    <i class="fa-solid fa-eye"></i>
+                  </a>
+                  <button @click="editMemberType(type)" class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-[11px] transition-colors" title="Edit">
                     <i class="fa-solid fa-pen"></i>
                   </button>
-                  <button class="p-1.5 rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 text-[11px] transition-colors" title="Delete">
+                  <button @click="deleteMemberType(type)" class="p-1.5 rounded-lg text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 text-[11px] transition-colors" title="Delete">
                     <i class="fa-solid fa-trash"></i>
                   </button>
                 </div>

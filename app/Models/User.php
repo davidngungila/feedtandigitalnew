@@ -23,6 +23,7 @@ class User extends Authenticatable
         'two_factor_type',
         'two_factor_secret',
         'two_factor_recovery_codes',
+        'profile_image',
     ];
 
     protected $appends = ['role_label', 'last_login'];
