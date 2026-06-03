@@ -434,6 +434,8 @@
         </select></div>
       <div class="col-span-2"><label class="form-label text-[11px]" :class="darkMode?'text-primary-300':'text-primary-700'" x-text="userForm.id ? 'Password (leave blank to keep current)' : 'Password *'"></label>
         <input x-model="userForm.password" type="password" class="form-input input-field text-xs" placeholder="Temporary password" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/></div>
+      <div class="col-span-2"><label class="form-label text-[11px]" :class="darkMode?'text-primary-300':'text-primary-700'">PIN (Optional)</label>
+        <input x-model="userForm.pin" type="number" class="form-input input-field text-xs" placeholder="4-10 digit PIN" :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200'"/></div>
       <div class="flex items-center gap-2 mt-2">
         <input type="checkbox" x-model="userForm.is_active" id="userActive">
         <label for="userActive" class="text-xs" :class="darkMode?'text-primary-300':'text-primary-700'">Account Active</label>

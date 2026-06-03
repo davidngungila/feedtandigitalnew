@@ -4,8 +4,11 @@
 <aside :class="[
   sidebarOpen?'mobile-open':'', 
   sidebarCollapsed?'w-16':'w-[260px]',
-  'sidebar sidebar-bg fixed lg:relative h-screen z-50 flex flex-col transition-all duration-300'
-]" class="sidebar-bg">
+  'sidebar sidebar-bg fixed lg:relative h-screen z-50 flex flex-col transition-all duration-300 overflow-hidden'
+]" 
+@mouseenter="sidebarHovered = true" 
+@mouseleave="sidebarHovered = false"
+class="sidebar-bg">
 
   <!-- Sidebar Header -->
   <div class="flex items-center justify-center lg:justify-between p-4 border-b border-primary-800/50 flex-shrink-0">
@@ -13,7 +16,7 @@
       <div class="w-8 h-8 rounded-lg bg-primary-400 flex items-center justify-center flex-shrink-0">
         <i class="fa-solid fa-leaf text-primary-900 text-sm"></i>
       </div>
-      <div x-show="!sidebarCollapsed" class="lg:block">
+      <div x-show="!sidebarCollapsed || sidebarHovered" class="lg:block">
         <p class="text-white font-bold text-sm leading-tight">FEEDTAN</p>
         <p class="text-primary-300 text-[10px]">Management Information System</p>
       </div>
@@ -28,7 +31,7 @@
       <a href="{{ route('dashboard') }}" :class="activePage==='dashboard'?'bg-primary-600 text-white':'text-primary-200 hover:bg-primary-800/50 hover:text-white'"
               class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 group">
         <i class="fa-solid fa-gauge-high w-4 text-center flex-shrink-0"></i>
-        <span x-show="!sidebarCollapsed" class="font-medium">Dashboard</span>
+        <span x-show="!sidebarCollapsed || sidebarHovered" class="font-medium">Dashboard</span>
       </a>
     </template>
 
@@ -45,14 +48,14 @@
                         class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-all duration-150">
                   <div class="flex items-center gap-3">
                     <i :class="item.icon" class="w-4 text-center flex-shrink-0"></i>
-                    <span x-show="!sidebarCollapsed" class="font-medium" x-text="item.label"></span>
+                    <span x-show="!sidebarCollapsed || sidebarHovered" class="font-medium" x-text="item.label"></span>
                   </div>
-                  <template x-if="!sidebarCollapsed">
+                  <template x-if="!sidebarCollapsed || sidebarHovered">
                     <i :class="openDropdowns.includes(item.id)?'fa-solid fa-chevron-up':'fa-solid fa-chevron-down'" class="text-[10px] text-primary-400"></i>
                   </template>
                 </button>
                 <!-- Children -->
-                <div x-show="!sidebarCollapsed" :class="openDropdowns.includes(item.id)?'max-h-[500px]':'max-h-0'" class="overflow-hidden transition-all duration-300 ml-3">
+                <div x-show="(!sidebarCollapsed || sidebarHovered)" :class="openDropdowns.includes(item.id)?'max-h-[500px]':'max-h-0'" class="overflow-hidden transition-all duration-300 ml-3">
                   <template x-for="child in item.children" :key="child.id">
                     <a :href="child.route"
                             :class="activePage===child.id?'bg-primary-600/80 text-white':'text-primary-300 hover:bg-primary-800/30 hover:text-white'"
@@ -71,7 +74,7 @@
                       :class="activePage===item.id?'bg-primary-600 text-white':'text-primary-200 hover:bg-primary-800/50 hover:text-white'"
                       class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150">
                 <i :class="item.icon" class="w-4 text-center flex-shrink-0"></i>
-                <span x-show="!sidebarCollapsed" class="font-medium" x-text="item.label"></span>
+                <span x-show="!sidebarCollapsed || sidebarHovered" class="font-medium" x-text="item.label"></span>
               </a>
             </template>
           </div>

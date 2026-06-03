@@ -464,11 +464,28 @@ class DashboardController extends Controller
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
-            'password' => ['required'],
+            'login_method' => ['required', 'in:password,pin'],
+            'password' => ['required_if:login_method,password'],
+            'pin' => ['required_if:login_method,pin'],
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+        $user = User::where('email', $credentials['email'])->first();
+        $authenticated = false;
+
+        if ($user) {
+            if ($credentials['login_method'] === 'password') {
+                if (Hash::check($credentials['password'], $user->password)) {
+                    $authenticated = true;
+                }
+            } else {
+                if ($user->pin && Hash::check($credentials['pin'], $user->pin)) {
+                    $authenticated = true;
+                }
+            }
+        }
+
+        if ($authenticated) {
+            Auth::login($user);
             
             // Check if user is a staff member
             if (!$user->isAdmin() && !$user->isManager() && !$user->isTeller() && !$user->isAuditor() && 
@@ -513,7 +530,7 @@ class DashboardController extends Controller
 
         // Log failed attempt
         AuditLog::create([
-            'user_id' => null,
+            'user_id' => $user?->id,
             'action' => 'Failed Login Attempt',
             'module' => 'Authentication',
             'ip_address' => $request->ip(),
@@ -631,12 +648,16 @@ class DashboardController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
+            'pin' => 'nullable|string|min:4|max:10',
             'role' => 'required|string',
             'branch' => 'nullable|string',
             'phone' => 'nullable|string',
         ]);
 
         $data['password'] = Hash::make($data['password']);
+        if ($request->filled('pin')) {
+            $data['pin'] = Hash::make($data['pin']);
+        }
         $user = User::create($data);
 
         AuditLog::create([
@@ -663,6 +684,9 @@ class DashboardController extends Controller
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+        if ($request->filled('pin')) {
+            $data['pin'] = Hash::make($request->pin);
         }
 
         $user->update($data);

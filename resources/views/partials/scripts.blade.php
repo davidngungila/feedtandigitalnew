@@ -7,12 +7,15 @@ function FeedtanApp(initialData) {
     loggedIn: initialData.loggedIn || false,
     loginEmail: '',
     loginPassword: '',
+    loginPin: '',
+    loginMethod: 'password',
     loginRole: 'admin', // for the UI selector
     currentUser: initialData.currentUser || {},
     
     darkMode: localStorage.getItem('feedtan_dark') === 'true',
     sidebarOpen: false,
     sidebarCollapsed: localStorage.getItem('feedtan_sidebar_collapsed') === 'true',
+    sidebarHovered: false,
     activePage: initialData.activePage || 'dashboard',
     isLoading: initialData.isLoading ?? false,
     activeModal: null,
@@ -113,7 +116,7 @@ function FeedtanApp(initialData) {
     receiptSettings: (initialData.systemSettings && initialData.systemSettings.receipts) ? initialData.systemSettings.receipts : { logo: '', footer: '' },
     otpSettings: (initialData.systemSettings && initialData.systemSettings.otp) ? initialData.systemSettings.otp : { sms: true, email: true, app: true, expiry: 10, retries: 3, length: 6 },
     reminders: (initialData.systemSettings && initialData.systemSettings.reminders) ? initialData.systemSettings.reminders : [],
-    userForm: { id: null, name: '', email: '', password: '', role: 'teller', branch: '', phone: '', is_active: true },
+    userForm: { id: null, name: '', email: '', password: '', pin: '', role: 'teller', branch: '', phone: '', is_active: true },
     memberForm: { 
       id: null, 
       name: '', 
@@ -1122,7 +1125,9 @@ function FeedtanApp(initialData) {
           },
           body: JSON.stringify({
             email: this.loginEmail,
-            password: this.loginPassword
+            password: this.loginPassword,
+            pin: this.loginPin,
+            login_method: this.loginMethod
           })
         });
 
