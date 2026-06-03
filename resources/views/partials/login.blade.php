@@ -32,31 +32,12 @@
           </div>
         </div>
 
-        <!-- Login Method Toggle -->
-        <div class="mb-4">
-          <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Login Method</label>
-          <div class="flex gap-2 rounded-xl p-1" :class="darkMode?'bg-[#0a140e]':'bg-gray-100'">
-            <button type="button" @click="loginMethod='password'" 
-                    class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all" 
-                    :class="loginMethod==='password' ? 'bg-primary-600 text-white' : (darkMode?'text-primary-400':'text-primary-600')">
-              <i class="fa-solid fa-lock mr-1"></i> Password
-            </button>
-            <button type="button" @click="loginMethod='pin'" 
-                    class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all" 
-                    :class="loginMethod==='pin' ? 'bg-primary-600 text-white' : (darkMode?'text-primary-400':'text-primary-600')">
-              <i class="fa-solid fa-key mr-1"></i> PIN
-            </button>
-          </div>
-        </div>
-
-        <!-- Password/PIN Input -->
+        <!-- Password -->
         <div class="mb-6">
-          <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'" x-text="loginMethod==='password'?'Password':'PIN'"></label>
+          <label class="form-label" :class="darkMode?'text-primary-300':'text-primary-700'">Password</label>
           <div class="relative">
-            <i :class="loginMethod==='password'?'fa-solid fa-lock':'fa-solid fa-key'" class="absolute left-3 top-1/2 -translate-y-1/2 text-sm" :class="darkMode?'text-primary-400':'text-primary-500'"></i>
-            <input :type="loginMethod==='password'?'password':'number'" :x-model="loginMethod==='password'?'loginPassword':'loginPin'" 
-                   :required="true" :placeholder="loginMethod==='password'?'••••••••':'••••••'" 
-                   :maxlength="loginMethod==='pin'?6:null"
+            <i class="fa-solid fa-lock absolute left-3 top-1/2 -translate-y-1/2 text-sm" :class="darkMode?'text-primary-400':'text-primary-500'"></i>
+            <input type="password" x-model="loginPassword" required placeholder="••••••••"
                    class="form-input input-field pl-9"
                    :class="darkMode?'bg-[#0a140e] border-[#1a3328] text-white':'bg-gray-50 border-primary-200 text-primary-900'"/>
           </div>

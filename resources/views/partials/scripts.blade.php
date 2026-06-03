@@ -7,8 +7,6 @@ function FeedtanApp(initialData) {
     loggedIn: initialData.loggedIn || false,
     loginEmail: '',
     loginPassword: '',
-    loginPin: '',
-    loginMethod: 'password',
     loginRole: 'admin', // for the UI selector
     currentUser: initialData.currentUser || {},
     
@@ -1125,9 +1123,7 @@ function FeedtanApp(initialData) {
           },
           body: JSON.stringify({
             email: this.loginEmail,
-            password: this.loginPassword,
-            pin: this.loginPin,
-            login_method: this.loginMethod
+            password: this.loginPassword
           })
         });
 

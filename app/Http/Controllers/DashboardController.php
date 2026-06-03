@@ -513,7 +513,7 @@ class DashboardController extends Controller
 
         // Log failed attempt
         AuditLog::create([
-            'user_id' => User::where('email', $request->email)->first()?->id,
+            'user_id' => null,
             'action' => 'Failed Login Attempt',
             'module' => 'Authentication',
             'ip_address' => $request->ip(),
