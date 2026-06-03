@@ -464,28 +464,11 @@ class DashboardController extends Controller
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
-            'login_method' => ['required', 'in:password,pin'],
-            'password' => ['required_if:login_method,password'],
-            'pin' => ['required_if:login_method,pin'],
+            'password' => ['required'],
         ]);
 
-        $user = User::where('email', $credentials['email'])->first();
-        $authenticated = false;
-
-        if ($user) {
-            if ($credentials['login_method'] === 'password') {
-                if (Hash::check($credentials['password'], $user->password)) {
-                    $authenticated = true;
-                }
-            } else {
-                if ($user->pin && Hash::check($credentials['pin'], $user->pin)) {
-                    $authenticated = true;
-                }
-            }
-        }
-
-        if ($authenticated) {
-            Auth::login($user);
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
             
             // Check if user is a staff member
             if (!$user->isAdmin() && !$user->isManager() && !$user->isTeller() && !$user->isAuditor() && 
@@ -530,7 +513,7 @@ class DashboardController extends Controller
 
         // Log failed attempt
         AuditLog::create([
-            'user_id' => $user?->id,
+            'user_id' => User::where('email', $request->email)->first()?->id,
             'action' => 'Failed Login Attempt',
             'module' => 'Authentication',
             'ip_address' => $request->ip(),
