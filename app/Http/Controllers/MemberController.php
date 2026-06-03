@@ -35,6 +35,7 @@ class MemberController extends Controller
         $data['members'] = Member::with(['user', 'savingsAccounts', 'loans'])->get()->map(function($m) {
             $m->total_savings = $m->savingsAccounts->sum('balance');
             $m->total_loans = $m->loans->where('status', 'active')->sum('balance');
+            $m->makeVisible(['mobile_lock']);
             return $m;
         });
         
@@ -326,5 +327,18 @@ class MemberController extends Controller
     {
         $members = Member::with('user')->latest()->get();
         return $this->renderPage('pages.members.statements', 'members-statements', compact('members'));
+    }
+
+    public function toggleMobileLock(Member $member)
+    {
+        $member->update([
+            'mobile_lock' => !$member->mobile_lock
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $member->mobile_lock ? 'Member mobile login locked' : 'Member mobile login unlocked',
+            'member' => $member
+        ]);
     }
 }

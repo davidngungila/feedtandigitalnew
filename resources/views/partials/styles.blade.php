@@ -46,8 +46,7 @@ body:not(.dark) .table-row:hover { background: #ecfdf5; }
 
 /* Sidebar */
 .sidebar { transition: width 0.3s cubic-bezier(0.4,0,0.2,1), transform 0.3s cubic-bezier(0.4,0,0.2,1); }
-.sidebar-collapsed { width: 64px; }
-.sidebar-expanded { width: 260px; }
+.sidebar:hover { width: 260px; }
 
 /* Dropdown menus in sidebar */
 .sidebar-dropdown { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }

@@ -23,6 +23,7 @@ class Member extends Model
         'po_box',
         'membership_type',
         'status',
+        'mobile_lock',
         'joined_at',
         'gender',
         'dob',

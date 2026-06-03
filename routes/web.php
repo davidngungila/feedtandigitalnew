@@ -33,9 +33,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/members/blacklisted', [MemberController::class, 'blacklisted'])->name('members.blacklisted');
     Route::get('/members/types', [MemberController::class, 'types'])->name('members.types');
     Route::get('/members/types/{memberType}', [MemberController::class, 'showType'])->name('members.types.show');
-    Route::post('/members/types', [MemberController::class, 'storeType'])->name('members.types.store');
+    Route::put('/members/types', [MemberController::class, 'storeType'])->name('members.types.store');
     Route::put('/members/types/{memberType}', [MemberController::class, 'updateType'])->name('members.types.update');
     Route::delete('/members/types/{memberType}', [MemberController::class, 'destroyType'])->name('members.types.destroy');
+    Route::post('/members/{member}/toggle-mobile-lock', [MemberController::class, 'toggleMobileLock'])->name('members.toggle-mobile-lock');
     
     // Savings & Deposits
     Route::prefix('savings')->name('savings.')->group(function () {
