@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Member;
+use App\Models\SavingsAccount;
+use App\Models\Loan;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -289,6 +291,52 @@ class MemberAuthController extends Controller
                 ]
             ]
         ], 201);
+    }
+
+    public function dashboard(Request $request)
+    {
+        $user = $request->user();
+        $member = Member::where('user_id', $user->id)->firstOrFail();
+        
+        // Get savings accounts
+        $savingsAccounts = SavingsAccount::where('member_id', $member->id)->get();
+        $totalSavings = $savingsAccounts->sum('balance');
+        
+        // Get loans
+        $activeLoans = Loan::where('member_id', $member->id)->where('status', 'active')->get();
+        $totalActiveLoans = $activeLoans->sum('balance');
+        $loanDue = $activeLoans->sum('payment_amount') ?? 0;
+        
+        // Recent transactions
+        $recentTransactions = $member->transactions()->latest()->take(10)->get();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Dashboard data retrieved successfully',
+            'data' => [
+                'member' => [
+                    'member_no' => $member->member_no,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $member->phone,
+                    'region' => $member->region,
+                    'branch' => $member->branch,
+                    'membership_type' => $member->membership_type,
+                    'status' => $member->status,
+                    'joined_at' => $member->joined_at,
+                    'passport_photo' => $member->passport_photo ? asset($member->passport_photo) : null,
+                ],
+                'balances' => [
+                    'total_savings' => $totalSavings,
+                    'active_loans' => $totalActiveLoans,
+                    'loan_due' => $loanDue,
+                    'shares' => 0,
+                    'welfare' => 0,
+                    'investments' => 0,
+                ],
+                'recent_transactions' => $recentTransactions
+            ]
+        ]);
     }
 
     public function logout(Request $request)

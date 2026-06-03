@@ -11,5 +11,6 @@ Route::prefix('member')->group(function () {
     
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [MemberAuthController::class, 'logout']);
+        Route::get('dashboard', [MemberAuthController::class, 'dashboard']);
     });
 });

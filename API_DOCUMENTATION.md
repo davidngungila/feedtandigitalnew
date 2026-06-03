@@ -21,7 +21,7 @@ All endpoints return JSON responses.
 ## 1. Check Email
 Check if an email is registered and its status.
 
-**Endpoint**: `POST /member/check-email`
+**Endpoint**: `POST /api/member/check-email`
 
 **Headers**:
 - Content-Type: application/json
@@ -78,7 +78,7 @@ Check if an email is registered and its status.
   "data": {
     "needs_registration": false,
     "pin_is_set": false,
-    "member": {...}
+    "member": { ... }
   }
 }
 ```
@@ -88,7 +88,7 @@ Check if an email is registered and its status.
 ## 2. First Time Login (Password → Set PIN)
 For first time login (PIN not set yet). Verifies password and sets a new PIN.
 
-**Endpoint**: `POST /member/login-first`
+**Endpoint**: `POST /api/member/login-first`
 
 **Headers**:
 - Content-Type: application/json
@@ -109,7 +109,7 @@ For first time login (PIN not set yet). Verifies password and sets a new PIN.
   "message": "PIN set and logged in successfully",
   "data": {
     "token": "1|abc123xyz...",
-    "member": {...}
+    "member": { ... }
   }
 }
 ```
@@ -119,7 +119,7 @@ For first time login (PIN not set yet). Verifies password and sets a new PIN.
 ## 3. PIN Login
 For subsequent logins (PIN already set).
 
-**Endpoint**: `POST /member/login-pin`
+**Endpoint**: `POST /api/member/login-pin`
 
 **Headers**:
 - Content-Type: application/json
@@ -139,7 +139,7 @@ For subsequent logins (PIN already set).
   "message": "Logged in successfully with PIN",
   "data": {
     "token": "1|abc123xyz...",
-    "member": {...}
+    "member": { ... }
   }
 }
 ```
@@ -149,7 +149,7 @@ For subsequent logins (PIN already set).
 ## 4. Member Registration
 Register a new member.
 
-**Endpoint**: `POST /member/register`
+**Endpoint**: `POST /api/member/register`
 
 **Headers**:
 - Content-Type: application/json
@@ -188,17 +188,59 @@ Register a new member.
   "message": "Member registered successfully",
   "data": {
     "token": "1|abc123xyz...",
-    "member": {...}
+    "member": { ... }
   }
 }
 ```
 
 ---
 
-## 5. Logout
+## 5. Get Dashboard Data
+Get member dashboard details including balances and recent transactions. Requires authentication.
+
+**Endpoint**: `GET /api/member/dashboard`
+
+**Headers**:
+- Content-Type: application/json
+- Authorization: Bearer {token}
+
+**Response (Success)**:
+```json
+{
+  "success": true,
+  "message": "Dashboard data retrieved successfully",
+  "data": {
+    "member": {
+      "member_no": "M-2025-000001",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+255712345678",
+      "region": "Dar es Salaam",
+      "branch": "Main",
+      "membership_type": "Regular",
+      "status": "Active",
+      "joined_at": "2024-01-01T00:00:00Z",
+      "passport_photo": "https://digital.feedtancmg.org/storage/..."
+    },
+    "balances": {
+      "total_savings": 2840000,
+      "active_loans": 3270000,
+      "loan_due": 327000,
+      "shares": 0,
+      "welfare": 0,
+      "investments": 0
+    },
+    "recent_transactions": []
+  }
+}
+```
+
+---
+
+## 6. Logout
 Logout the member. Requires authentication token.
 
-**Endpoint**: `POST /member/logout`
+**Endpoint**: `POST /api/member/logout`
 
 **Headers**:
 - Content-Type: application/json
@@ -217,19 +259,20 @@ Logout the member. Requires authentication token.
 ## Flutter App Implementation Flow
 
 ### Screen Flow:
-1. **Welcome/Splash Screen**
-2. **Email Entry Screen**
-   → Call `check-email` endpoint
-   → If `needs_registration`: Navigate to Registration Screen
-   → Else if `pin_is_set`: Navigate to PIN Login Screen
+1. Welcome/Splash Screen
+2. Email Entry Screen
+   → Call check-email endpoint
+   → If needs_registration: Navigate to Registration Screen
+   → Else if pin_is_set: Navigate to PIN Login Screen
    → Else (email found, no PIN): Navigate to First Time Login (Password → Set PIN)
-3. **Registration Screen**
-4. **First Time Login (Password & Set PIN) Screen**
-5. **PIN Login Screen** (subsequent logins)
-6. **Home/Dashboard Screen** (after login)
+3. Registration Screen
+4. First Time Login (Password and Set PIN) Screen
+5. PIN Login Screen (subsequent logins)
+6. Home/Dashboard Screen (after login)
+   → On load: Call GET /api/member/dashboard to fetch member data, balances, and transactions!
 
 ### Using Bearer Token in Flutter:
-Add the `Authorization` header to all authenticated requests:
+Add the Authorization header to all authenticated requests:
 ```dart
 headers: {
   'Content-Type': 'application/json',
@@ -240,5 +283,5 @@ headers: {
 ---
 
 ## Notes for Web Admin
-- Locking/unlocking member mobile access is done in Members Active page: `/members/active`
+- Locking/unlocking member mobile access is done in Members Active page: /members/active
 - Locked members will receive an access denied error if they try to login via mobile.
