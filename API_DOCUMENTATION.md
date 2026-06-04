@@ -1,287 +1,494 @@
-# Member Mobile App API Documentation
+# FeedTan Digital - Mobile App API Documentation
 
-Base URL: `https://digital.feedtancmg.org/api`
+## Base URL
 
----
+```
+https://yourdomain.com/api/member
+```
 
-## Authentication Overview
-All endpoints return JSON responses.
+## Authentication
 
-### Response Format
-```json
-{
-  "success": true|false,
-  "message": "Description",
-  "data": {}
-}
+Most endpoints require an authentication token. To authenticate, include this header in your requests:
+
+```
+Authorization: Bearer <your-token>
 ```
 
 ---
 
-## 1. Check Email
-Check if an email is registered and its status.
+## Public Endpoints (No Authentication Required)
 
-**Endpoint**: `POST /api/member/check-email`
+### 1. Send OTP
 
-**Headers**:
-- Content-Type: application/json
+Sends an OTP to the provided phone number.
 
-**Request Body**:
+**Endpoint:** `POST /api/member/send-otp`
+
+**Request Body:**
 ```json
 {
-  "email": "member@example.com"
+    "phone": "+255712345678"
 }
 ```
 
-**Responses**:
-
-**Case 1: Email not registered**
+**Response:**
 ```json
 {
-  "success": false,
-  "message": "Email not found in system, please register first",
-  "data": {
-    "needs_registration": true
-  }
-}
-```
-
-**Case 2: Email found (PIN already set)**
-```json
-{
-  "success": true,
-  "message": "Email found",
-  "data": {
-    "needs_registration": false,
-    "pin_is_set": true,
-    "member": {
-      "member_no": "M-2025-000001",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "phone": "+255712345678",
-      "region": "Dar es Salaam",
-      "branch": "Main",
-      "membership_type": "Regular",
-      "status": "Active",
-      "joined_at": "2024-01-01T00:00:00Z",
-      "passport_photo": "https://digital.feedtancmg.org/storage/..."
+    "success": true,
+    "message": "OTP sent successfully",
+    "data": {
+        "otp": "123456",
+        "expires_at": "2024-06-04T12:34:56+00:00"
     }
-  }
-}
-```
-
-**Case 3: Email found (PIN not set - first time login)**
-```json
-{
-  "success": true,
-  "message": "Email found",
-  "data": {
-    "needs_registration": false,
-    "pin_is_set": false,
-    "member": { ... }
-  }
 }
 ```
 
 ---
 
-## 2. First Time Login (Password → Set PIN)
-For first time login (PIN not set yet). Verifies password and sets a new PIN.
+### 2. Verify OTP
 
-**Endpoint**: `POST /api/member/login-first`
+Verifies the OTP sent to the phone number.
 
-**Headers**:
-- Content-Type: application/json
+**Endpoint:** `POST /api/member/verify-otp`
 
-**Request Body**:
+**Request Body:**
 ```json
 {
-  "email": "member@example.com",
-  "password": "memberpassword123",
-  "pin": "1234"
+    "phone": "+255712345678",
+    "otp": "123456"
 }
 ```
 
-**Response (Success)**:
+**Response:**
 ```json
 {
-  "success": true,
-  "message": "PIN set and logged in successfully",
-  "data": {
-    "token": "1|abc123xyz...",
-    "member": { ... }
-  }
+    "success": true,
+    "message": "OTP verified successfully"
 }
 ```
 
 ---
 
-## 3. PIN Login
-For subsequent logins (PIN already set).
+### 3. Check Email
 
-**Endpoint**: `POST /api/member/login-pin`
+Check if an email exists in the system for login.
 
-**Headers**:
-- Content-Type: application/json
+**Endpoint:** `POST /api/member/check-email`
 
-**Request Body**:
+**Request Body:**
 ```json
 {
-  "email": "member@example.com",
-  "pin": "1234"
+    "email": "john@example.com"
 }
 ```
 
-**Response (Success)**:
+**Response (New member, needs registration):**
 ```json
 {
-  "success": true,
-  "message": "Logged in successfully with PIN",
-  "data": {
-    "token": "1|abc123xyz...",
-    "member": { ... }
-  }
+    "success": false,
+    "message": "Email not found in system, please register first",
+    "data": {
+        "needs_registration": true
+    }
+}
+```
+
+**Response (Existing member):**
+```json
+{
+    "success": true,
+    "message": "Email found",
+    "data": {
+        "needs_registration": false,
+        "pin_is_set": true,
+        "member": {
+            "member_no": "M-2024-000001",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "phone": "+255712345678",
+            "region": "Dar es Salaam",
+            "branch": "Main",
+            "membership_type": "Regular",
+            "status": "Active",
+            "joined_at": "2024-05-20T10:00:00Z",
+            "passport_photo": null
+        }
+    }
 }
 ```
 
 ---
 
-## 4. Member Registration
-Register a new member.
+### 4. Register Member
 
-**Endpoint**: `POST /api/member/register`
+Registers a new member account.
 
-**Headers**:
-- Content-Type: application/json
+**Endpoint:** `POST /api/member/register`
 
-**Request Body**:
+**Request Body:**
 ```json
 {
-  "name": "New Member",
-  "email": "new@example.com",
-  "password": "password123",
-  "phone": "+255712345678",
-  "nida": "1234567890",
-  "gender": "Male",
-  "dob": "1990-01-01",
-  "marital_status": "Single",
-  "occupation": "Engineer",
-  "employer": "Company XYZ",
-  "region": "Dar es Salaam",
-  "district": "Ilala",
-  "ward": "Mchafukoge",
-  "street": "Samora Avenue",
-  "po_box": "1234",
-  "branch": "Main",
-  "membership_type": "Regular",
-  "next_of_kin_name": "Jane Doe",
-  "next_of_kin_relationship": "Sister",
-  "next_of_kin_phone": "+255711223344",
-  "pin": "1234"
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "password123",
+    "phone": "+255712345678",
+    "nida": "1234567890123456",
+    "gender": "Male",
+    "dob": "1990-01-01",
+    "marital_status": "Single",
+    "occupation": "Business Owner",
+    "employer": "Self",
+    "region": "Dar es Salaam",
+    "district": "Kinondoni",
+    "ward": "Mikocheni",
+    "street": "Bagamoyo Road",
+    "po_box": "1234",
+    "branch": "Main",
+    "membership_type": "Regular",
+    "next_of_kin_name": "Jane Doe",
+    "next_of_kin_relationship": "Sister",
+    "next_of_kin_phone": "+255719876543",
+    "pin": "1234"
 }
 ```
 
-**Response (Success)**:
+**Response:**
 ```json
 {
-  "success": true,
-  "message": "Member registered successfully",
-  "data": {
-    "token": "1|abc123xyz...",
-    "member": { ... }
-  }
+    "success": true,
+    "message": "Member registered successfully",
+    "data": {
+        "token": "3|mE5Lx3d13uL...",
+        "member": {
+            "member_no": "M-2024-000001",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "phone": "+255712345678",
+            "region": "Dar es Salaam",
+            "branch": "Main",
+            "membership_type": "Regular",
+            "status": "Active",
+            "joined_at": "2024-06-04T10:00:00Z"
+        }
+    }
 }
 ```
 
 ---
 
-## 5. Get Dashboard Data
-Get member dashboard details including balances and recent transactions. Requires authentication.
+### 5. First Time Login
 
-**Endpoint**: `GET /api/member/dashboard`
+Logs in an existing member and sets a PIN.
 
-**Headers**:
-- Content-Type: application/json
-- Authorization: Bearer {token}
+**Endpoint:** `POST /api/member/login-first`
 
-**Response (Success)**:
+**Request Body:**
 ```json
 {
-  "success": true,
-  "message": "Dashboard data retrieved successfully",
-  "data": {
-    "member": {
-      "member_no": "M-2025-000001",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "phone": "+255712345678",
-      "region": "Dar es Salaam",
-      "branch": "Main",
-      "membership_type": "Regular",
-      "status": "Active",
-      "joined_at": "2024-01-01T00:00:00Z",
-      "passport_photo": "https://digital.feedtancmg.org/storage/..."
-    },
-    "balances": {
-      "total_savings": 2840000,
-      "active_loans": 3270000,
-      "loan_due": 327000,
-      "shares": 0,
-      "welfare": 0,
-      "investments": 0
-    },
-    "recent_transactions": []
-  }
+    "email": "john@example.com",
+    "password": "password123",
+    "pin": "1234"
 }
 ```
 
----
-
-## 6. Logout
-Logout the member. Requires authentication token.
-
-**Endpoint**: `POST /api/member/logout`
-
-**Headers**:
-- Content-Type: application/json
-- Authorization: Bearer {token}
-
-**Response (Success)**:
+**Response:**
 ```json
 {
-  "success": true,
-  "message": "Logged out successfully"
+    "success": true,
+    "message": "PIN set and logged in successfully",
+    "data": {
+        "token": "3|mE5Lx3d13uL...",
+        "member": {
+            "member_no": "M-2024-000001",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "phone": "+255712345678",
+            "region": "Dar es Salaam",
+            "branch": "Main",
+            "membership_type": "Regular",
+            "status": "Active",
+            "joined_at": "2024-05-20T10:00:00Z",
+            "passport_photo": null
+        }
+    }
 }
 ```
 
 ---
 
-## Flutter App Implementation Flow
+### 6. Login with PIN
 
-### Screen Flow:
-1. Welcome/Splash Screen
-2. Email Entry Screen
-   → Call check-email endpoint
-   → If needs_registration: Navigate to Registration Screen
-   → Else if pin_is_set: Navigate to PIN Login Screen
-   → Else (email found, no PIN): Navigate to First Time Login (Password → Set PIN)
-3. Registration Screen
-4. First Time Login (Password and Set PIN) Screen
-5. PIN Login Screen (subsequent logins)
-6. Home/Dashboard Screen (after login)
-   → On load: Call GET /api/member/dashboard to fetch member data, balances, and transactions!
+Logs in a member using their PIN.
 
-### Using Bearer Token in Flutter:
-Add the Authorization header to all authenticated requests:
-```dart
-headers: {
-  'Content-Type': 'application/json',
-  'Authorization': 'Bearer $token'
+**Endpoint:** `POST /api/member/login-pin`
+
+**Request Body:**
+```json
+{
+    "email": "john@example.com",
+    "pin": "1234"
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Logged in successfully with PIN",
+    "data": {
+        "token": "3|mE5Lx3d13uL...",
+        "member": {
+            "member_no": "M-2024-000001",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "phone": "+255712345678",
+            "region": "Dar es Salaam",
+            "branch": "Main",
+            "membership_type": "Regular",
+            "status": "Active",
+            "joined_at": "2024-05-20T10:00:00Z",
+            "passport_photo": null
+        }
+    }
 }
 ```
 
 ---
 
-## Notes for Web Admin
-- Locking/unlocking member mobile access is done in Members Active page: /members/active
-- Locked members will receive an access denied error if they try to login via mobile.
+---
+
+## Protected Endpoints (Requires Authentication)
+
+---
+
+### 7. Logout
+
+Logs out the member and revokes the token.
+
+**Endpoint:** `POST /api/member/logout`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Logged out successfully"
+}
+```
+
+---
+
+### 8. Dashboard
+
+Gets the dashboard overview.
+
+**Endpoint:** `GET /api/member/dashboard`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Dashboard data retrieved successfully",
+    "data": {
+        "member": {
+            "member_no": "M-2024-000001",
+            "name": "John Doe",
+            "email": "john@example.com",
+            "phone": "+255712345678",
+            "region": "Dar es Salaam",
+            "branch": "Main",
+            "membership_type": "Regular",
+            "status": "Active",
+            "joined_at": "2024-05-20T10:00:00Z",
+            "passport_photo": null
+        },
+        "balances": {
+            "total_savings": 500000,
+            "active_loans": 300000,
+            "loan_due": 50000,
+            "shares": 0,
+            "welfare": 0,
+            "investments": 0
+        },
+        "recent_transactions": [...]
+    }
+}
+```
+
+---
+
+### 9. Get Profile
+
+Get member profile details.
+
+**Endpoint:** `GET /api/member/profile`
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
+### 10. Update Profile
+
+Update member profile information.
+
+**Endpoint:** `POST /api/member/profile`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+    "name": "John Doe",
+    "phone": "+255712345678",
+    "region": "Dar es Salaam",
+    "district": "Kinondoni",
+    "ward": "Mikocheni"
+}
+```
+
+---
+
+### 11. Upload Photo
+
+Upload passport photo or NIDA card photo.
+
+**Endpoint:** `POST /api/member/upload-photo`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+- `passport_photo` (image file, max 2MB)
+- `nida_card` (image file, max 2MB)
+
+---
+
+### 12. Change PIN
+
+Change member PIN.
+
+**Endpoint:** `POST /api/member/change-pin`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+    "current_pin": "1234",
+    "new_pin": "4321"
+}
+```
+
+---
+
+### 13. Change Password
+
+Change member password.
+
+**Endpoint:** `POST /api/member/change-password`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+    "current_password": "password123",
+    "new_password": "newpassword123"
+}
+```
+
+---
+
+### 14. Get Savings Accounts
+
+Get all member savings accounts.
+
+**Endpoint:** `GET /api/member/savings`
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
+### 15. Get Loans
+
+Get all member loans.
+
+**Endpoint:** `GET /api/member/loans`
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
+### 16. Get Investments
+
+Get all member investments.
+
+**Endpoint:** `GET /api/member/investments`
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
+### 17. Get Transactions
+
+Get member transaction history.
+
+**Endpoint:** `GET /api/member/transactions?per_page=20`
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
+### 18. Get Statements
+
+Get account statements for a date range.
+
+**Endpoint:** `GET /api/member/statements?from_date=2024-01-01&to_date=2024-12-31`
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
+### 19. Submit KYC
+
+Submit KYC documents for verification.
+
+**Endpoint:** `POST /api/member/submit-kyc`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Content-Type:** `multipart/form-data`
+
+**Form Data:**
+- `type`: "national_id", "passport", or "driver_license"
+- `document_number`: String
+- `document_image`: Image file (max 5MB)
+- `selfie`: Image file (optional, max 5MB)
+
+---
+
+### 20. Get KYC Status
+
+Get KYC verification status.
+
+**Endpoint:** `GET /api/member/kyc-status`
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
+## Error Codes
+
+| Code | Description |
+|------|-------------|
+| 200 | Success |
+| 201 | Created |
+| 400 | Bad Request (invalid data) |
+| 401 | Unauthorized (invalid credentials or token) |
+| 403 | Forbidden (account locked or inactive) |
+| 404 | Not Found |
+| 500 | Internal Server Error |
