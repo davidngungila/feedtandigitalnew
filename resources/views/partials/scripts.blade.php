@@ -165,6 +165,102 @@ function FeedtanApp(initialData) {
     commSettingsForm: { email: {}, sms: {} },
     commTab: 'email',
     tfaSetupData: { secret: '', backup_codes: [] },
+    businessProfileForm: {
+        group_name: '',
+        short_name: '',
+        business_type: '',
+        registration_status: '',
+        registration_number: '',
+        date_established: '',
+        logo: '',
+        description: '',
+        phone: '',
+        email: '',
+        website: '',
+        physical_address: '',
+        region: '',
+        district: '',
+        ward: '',
+        street: '',
+        postal_address: '',
+        chairperson_name: '',
+        secretary_name: '',
+        treasurer_name: '',
+        manager_name: '',
+        official_contact: '',
+        bank_name: '',
+        account_name: '',
+        account_number: '',
+        mobile_money_number: '',
+        mpesa: '',
+        airtel_money: '',
+        tigo_pesa: '',
+        payment_gateway: '',
+        transaction_charges: '',
+        registration_certificate: '',
+        constitution: '',
+        leadership_appointment: '',
+        tax_documents: '',
+        time_zone: '',
+        language: '',
+        date_format: '',
+        notif_sms: false,
+        notif_email: false,
+        notif_push: false
+    },
+    activeTab: 'basic',
+    businessDocuments: [],
+    businessBankDetails: [],
+    businessLeaders: [],
+    showUploadModal: false,
+    showPreviewModal: false,
+    showLeaderModal: false,
+    showBankModal: false,
+    previewDoc: null,
+    logoFile: null,
+    documentUploadForm: {
+        name: '',
+        type: '',
+        file: null
+    },
+    leaderForm: {
+        name: '',
+        role: '',
+        phone: '',
+        email: ''
+    },
+    bankForm: {
+        bank_name: '',
+        account_name: '',
+        account_number: '',
+        mobile_money_number: '',
+        mpesa: '',
+        airtel_money: '',
+        tigo_pesa: '',
+        lipa_number: '',
+        payment_gateway: '',
+        transaction_charges: ''
+    },
+    // Roles & Permissions
+    roles: [],
+    permissions: [],
+    groupedPermissions: {},
+    showRoleModal: false,
+    editingRole: null,
+    // Audit Log
+    showAuditLogModal: false,
+    selectedAuditLog: null,
+    // Geo Logs
+    showGeoLogModal: false,
+    selectedGeoLog: null,
+    showGeoMap: false,
+    roleForm: {
+        name: '',
+        slug: '',
+        description: '',
+        is_active: true,
+        permissions: []
+    },
     
     getQrCodeUrl() {
       if (!this.tfaSetupData.secret) return '';
@@ -217,6 +313,425 @@ function FeedtanApp(initialData) {
           this.commSettingsForm.sms[s.key] = s.value;
         });
       }
+      this.initBusinessProfile();
+      if (this.activePage === 'settings-business-profile') {
+        this.loadBusinessDocuments();
+        this.loadBusinessBankDetails();
+        this.loadBusinessLeaders();
+      }
+      if (this.activePage === 'admin-roles') {
+        this.loadRoles();
+        this.loadPermissions();
+      }
+    },
+
+    initBusinessProfile() {
+      if (this.systemSettings['business-profile']) {
+        this.systemSettings['business-profile'].forEach(s => {
+          if (['notif_sms', 'notif_email', 'notif_push'].includes(s.key)) {
+            this.businessProfileForm[s.key] = s.value === '1' || s.value === true;
+          } else {
+            this.businessProfileForm[s.key] = s.value;
+          }
+        });
+      }
+    },
+
+    async saveBusinessProfile() {
+      try {
+        // First upload logo if there's a file
+        if (this.logoFile) {
+          await this.uploadLogo();
+        }
+
+        // Then save the rest of the profile
+        const response = await fetch('/settings/business-profile', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.businessProfileForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.showToast('Business profile updated successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error updating business profile', 'error');
+      }
+    },
+    async loadBusinessDocuments() {
+      try {
+        const response = await fetch('/settings/business-documents');
+        const result = await response.json();
+        if (result.success) {
+          this.businessDocuments = result.documents;
+        }
+      } catch (e) {
+        console.error('Error loading documents', e);
+      }
+    },
+
+    async loadBusinessBankDetails() {
+      try {
+        const response = await fetch('/settings/business-bank-details');
+        const result = await response.json();
+        if (result.success) {
+          this.businessBankDetails = result.bank_details;
+        }
+      } catch (e) {
+        console.error('Error loading bank details', e);
+      }
+    },
+
+    async loadBusinessLeaders() {
+      try {
+        const response = await fetch('/settings/business-leaders');
+        const result = await response.json();
+        if (result.success) {
+          this.businessLeaders = result.leaders;
+        }
+      } catch (e) {
+        console.error('Error loading leaders', e);
+      }
+    },
+    handleDocumentFileSelect(event) {
+      this.documentUploadForm.file = event.target.files[0];
+    },
+    async uploadDocument() {
+      if (!this.documentUploadForm.name || !this.documentUploadForm.type || !this.documentUploadForm.file) {
+        this.showToast('Please fill all fields and select a file', 'error');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('name', this.documentUploadForm.name);
+        formData.append('type', this.documentUploadForm.type);
+        formData.append('file', this.documentUploadForm.file);
+
+        const response = await fetch('/settings/business-documents/upload', {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.businessDocuments.push(result.document);
+          this.showUploadModal = false;
+          this.documentUploadForm = { name: '', type: '', file: null };
+          this.$refs.documentFile.value = '';
+          this.showToast('Document uploaded successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error uploading document', 'error');
+      }
+    },
+    async deleteDocument(id) {
+      if (!confirm('Are you sure you want to delete this document?')) return;
+      
+      try {
+        const response = await fetch('/settings/business-documents/' + id, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.businessDocuments = this.businessDocuments.filter(doc => doc.id !== id);
+          this.showToast('Document deleted successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error deleting document', 'error');
+      }
+    },
+
+    async loadBusinessBankDetails() {
+      try {
+        const response = await fetch('/settings/business-bank-details');
+        const result = await response.json();
+        if (result.success) {
+          this.businessBankDetails = result.bank_details;
+        }
+      } catch (e) {
+        console.error('Error loading bank details', e);
+      }
+    },
+    async saveBankDetail() {
+      try {
+        const response = await fetch('/settings/business-bank-details', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.bankForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.businessBankDetails.push(result.bank_detail);
+          this.showBankModal = false;
+          this.bankForm = { bank_name: '', account_name: '', account_number: '', mobile_money_number: '', mpesa: '', airtel_money: '', tigo_pesa: '', lipa_number: '', payment_gateway: '', transaction_charges: '' };
+          this.showToast('Bank detail added successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error adding bank detail', 'error');
+      }
+    },
+    async deleteBankDetail(id) {
+      if (!confirm('Are you sure you want to delete this bank detail?')) return;
+      try {
+        const response = await fetch('/settings/business-bank-details/' + id, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.businessBankDetails = this.businessBankDetails.filter(b => b.id !== id);
+          this.showToast('Bank detail deleted successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error deleting bank detail', 'error');
+      }
+    },
+
+    async loadBusinessLeaders() {
+      try {
+        const response = await fetch('/settings/business-leaders');
+        const result = await response.json();
+        if (result.success) {
+          this.businessLeaders = result.leaders;
+        }
+      } catch (e) {
+        console.error('Error loading leaders', e);
+      }
+    },
+    async saveLeader() {
+      try {
+        const response = await fetch('/settings/business-leaders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.leaderForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.businessLeaders.push(result.leader);
+          this.showLeaderModal = false;
+          this.leaderForm = { name: '', role: '', phone: '', email: '' };
+          this.showToast('Leader added successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error adding leader', 'error');
+      }
+    },
+    async deleteLeader(id) {
+      if (!confirm('Are you sure you want to delete this leader?')) return;
+      try {
+        const response = await fetch('/settings/business-leaders/' + id, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.businessLeaders = this.businessLeaders.filter(l => l.id !== id);
+          this.showToast('Leader deleted successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error deleting leader', 'error');
+      }
+    },
+
+    async saveLeader() {
+      try {
+        const response = await fetch('/settings/business-leaders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.leaderForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.businessLeaders.push(result.leader);
+          this.showLeaderModal = false;
+          this.leaderForm = { name: '', role: '', phone: '', email: '' };
+          this.showToast('Leader added successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error adding leader', 'error');
+      }
+    },
+
+    async saveBankDetail() {
+      try {
+        const response = await fetch('/settings/business-bank-details', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.bankForm)
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.businessBankDetails.push(result.bank_detail);
+          this.showBankModal = false;
+          this.bankForm = { 
+            bank_name: '', account_name: '', account_number: '', 
+            mobile_money_number: '', mpesa: '', airtel_money: '', 
+            tigo_pesa: '', lipa_number: '', payment_gateway: '', 
+            transaction_charges: '' 
+          };
+          this.showToast('Payment detail added successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error adding payment detail', 'error');
+      }
+    },
+    openPreview(doc) {
+        this.previewDoc = doc;
+        this.showPreviewModal = true;
+    },
+
+    async loadRoles() {
+      try {
+        const response = await fetch('/roles');
+        const result = await response.json();
+        if (result.success) this.roles = result.roles;
+      } catch (e) { console.error(e); }
+    },
+
+    async loadPermissions() {
+      try {
+        const response = await fetch('/permissions');
+        const result = await response.json();
+        if (result.success) {
+          this.permissions = result.permissions;
+          this.groupedPermissions = result.grouped;
+        }
+      } catch (e) { console.error(e); }
+    },
+
+    resetRoleForm() {
+      this.roleForm = {
+        name: '', slug: '', description: '', is_active: true, permissions: []
+      };
+    },
+
+    editRole(role) {
+      this.editingRole = role;
+      this.roleForm.name = role.name;
+      this.roleForm.slug = role.slug;
+      this.roleForm.description = role.description;
+      this.roleForm.is_active = role.is_active;
+      this.roleForm.permissions = role.permissions.map(p => p.id);
+      this.showRoleModal = true;
+    },
+
+    async saveRole() {
+      const isEdit = !!this.editingRole;
+      const url = isEdit ? `/roles/${this.editingRole.id}` : '/roles';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify(this.roleForm)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          if (isEdit) {
+            const idx = this.roles.findIndex(r => r.id === result.role.id);
+            if (idx !== -1) this.roles[idx] = result.role;
+          } else {
+            this.roles.push(result.role);
+          }
+          this.showRoleModal = false;
+          this.resetRoleForm();
+          this.editingRole = null;
+          this.showToast(`Role ${isEdit ? 'updated' : 'created'} successfully`, 'success');
+        }
+      } catch (e) {
+        this.showToast('Error saving role', 'error');
+      }
+    },
+
+    async deleteRole(role) {
+      if (!confirm(`Are you sure you want to delete the "${role.name}" role?`)) return;
+      try {
+        const response = await fetch(`/roles/${role.id}`, {
+          method: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          this.roles = this.roles.filter(r => r.id !== role.id);
+          this.showToast('Role deleted successfully', 'success');
+        }
+      } catch (e) {
+        this.showToast('Error deleting role', 'error');
+      }
+    },
+
+    openAuditLogDetails(log) {
+      this.selectedAuditLog = log;
+      this.showAuditLogModal = true;
+    },
+
+    openGeoLogDetails(log) {
+      this.selectedGeoLog = log;
+      this.showGeoLogModal = true;
+    },
+
+    toggleGeoMap() {
+      this.showGeoMap = !this.showGeoMap;
+    },
+
+    handleLogoFileSelect(event) {
+        this.logoFile = event.target.files[0];
+    },
+
+    async uploadLogo() {
+        if (!this.logoFile) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('logo', this.logoFile);
+
+            const response = await fetch('/settings/business-logo', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                this.businessProfileForm.logo = result.logo_path;
+                this.showToast('Logo uploaded successfully', 'success');
+            }
+        } catch (e) {
+            this.showToast('Error uploading logo', 'error');
+        }
     },
 
     async saveUser() {

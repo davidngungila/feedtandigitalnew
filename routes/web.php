@@ -12,6 +12,8 @@ use App\Http\Controllers\SavingsReportController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MemberPortalController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 
 Route::get('/', [DashboardController::class, 'index']);
 Route::get('/login', [DashboardController::class, 'showLogin'])->name('login');
@@ -118,6 +120,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/settings/currency', [DashboardController::class, 'settingsCurrency'])->name('settings.currency');
     Route::get('/settings/fiscal-year', [DashboardController::class, 'settingsFiscalYear'])->name('settings.fiscal-year');
     Route::get('/settings/business-profile', [DashboardController::class, 'settingsBusinessProfile'])->name('settings.business-profile');
+    Route::post('/settings/business-profile', [DashboardController::class, 'updateBusinessProfile'])->name('settings.business-profile.update');
+    Route::get('/settings/business-documents', [DashboardController::class, 'getBusinessDocuments'])->name('settings.business-documents.get');
+    Route::post('/settings/business-documents/upload', [DashboardController::class, 'uploadBusinessDocument'])->name('settings.business-documents.upload');
+    Route::delete('/settings/business-documents/{id}', [DashboardController::class, 'deleteBusinessDocument'])->name('settings.business-documents.delete');
+    
+    Route::get('/settings/business-bank-details', [DashboardController::class, 'getBusinessBankDetails'])->name('settings.business-bank-details.get');
+    Route::post('/settings/business-bank-details', [DashboardController::class, 'storeBusinessBankDetail'])->name('settings.business-bank-details.store');
+    Route::delete('/settings/business-bank-details/{id}', [DashboardController::class, 'deleteBusinessBankDetail'])->name('settings.business-bank-details.delete');
+
+    Route::get('/settings/business-leaders', [DashboardController::class, 'getBusinessLeaders'])->name('settings.business-leaders.get');
+    Route::post('/settings/business-leaders', [DashboardController::class, 'storeBusinessLeader'])->name('settings.business-leaders.store');
+    Route::delete('/settings/business-leaders/{id}', [DashboardController::class, 'deleteBusinessLeader'])->name('settings.business-leaders.delete');
+    Route::post('/settings/business-logo', [DashboardController::class, 'uploadBusinessLogo'])->name('settings.business-logo.upload');
     Route::get('/settings/backup', [DashboardController::class, 'settingsBackup'])->name('settings.backup');
     Route::get('/settings/language', [DashboardController::class, 'settingsLanguage'])->name('settings.language');
     
@@ -125,6 +140,8 @@ Route::middleware(['auth'])->group(function () {
     
     Route::get('/admin/users', [DashboardController::class, 'adminUsers'])->name('admin.users');
     Route::get('/admin/roles', [DashboardController::class, 'adminRoles'])->name('admin.roles');
+    Route::get('/admin/roles/{id}', [DashboardController::class, 'adminRoleShow'])->name('admin.roles.show');
+    Route::get('/admin/roles/{id}/edit', [DashboardController::class, 'adminRoleEdit'])->name('admin.roles.edit');
     Route::get('/admin/kyc', [DashboardController::class, 'adminKyc'])->name('admin.kyc');
     
     Route::get('/admin/sessions', [DashboardController::class, 'adminSessions'])->name('admin.sessions');
@@ -167,7 +184,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/sessions/terminate-all', [DashboardController::class, 'terminateAllSessions'])->name('admin.sessions.terminate-all');
     
     Route::get('/withdrawals/requests', [WithdrawalController::class, 'requests'])->name('withdrawals.requests');
-
-
+    
+    // Roles & Permissions
+    Route::apiResource('roles', RoleController::class);
+    Route::apiResource('permissions', PermissionController::class);
 });
 

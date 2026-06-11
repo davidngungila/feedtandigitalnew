@@ -35,6 +35,7 @@
     </script>
 
     @include('partials.styles')
+    @stack('styles')
     <style>
         [x-cloak] { display: none !important; }
     </style>
@@ -57,5 +58,6 @@
 
     @include('partials.modals')
     @include('partials.scripts')
+    @stack('scripts')
 </body>
 </html>

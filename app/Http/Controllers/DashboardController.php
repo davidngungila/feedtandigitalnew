@@ -12,9 +12,13 @@ use App\Models\SystemSetting;
 use App\Models\IpRestriction;
 use App\Models\KycVerification;
 use App\Models\AmlAlert;
+use App\Models\BusinessDocument;
+use App\Models\BusinessBankDetail;
+use App\Models\BusinessLeader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
@@ -354,6 +358,167 @@ class DashboardController extends Controller
         return $this->renderPage('pages.settings.business_profile', 'settings-business-profile');
     }
 
+    public function updateBusinessProfile(Request $request)
+    {
+        $settings = $request->all();
+        foreach ($settings as $key => $value) {
+            SystemSetting::set($key, $value, 'business-profile');
+        }
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Update Business Profile',
+            'module' => 'Settings',
+            'ip_address' => $request->ip(),
+            'success' => true
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function getBusinessDocuments()
+    {
+        $documents = BusinessDocument::all();
+        return response()->json(['success' => true, 'documents' => $documents]);
+    }
+
+    public function uploadBusinessDocument(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|string|max:255',
+            'file' => 'required|file|max:10240', // 10MB max
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('business-documents', 'public');
+        $fileName = $file->getClientOriginalName();
+        $fileSize = $file->getSize();
+        $mimeType = $file->getMimeType();
+
+        $document = BusinessDocument::create([
+            'name' => $request->name,
+            'type' => $request->type,
+            'file_path' => $path,
+            'file_name' => $fileName,
+            'file_size' => $fileSize,
+            'mime_type' => $mimeType,
+        ]);
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Upload Business Document',
+            'module' => 'Settings',
+            'ip_address' => $request->ip(),
+            'success' => true
+        ]);
+
+        return response()->json(['success' => true, 'document' => $document]);
+    }
+
+    public function deleteBusinessDocument(Request $request, $id)
+    {
+        $document = BusinessDocument::findOrFail($id);
+        
+        // Delete file from storage
+        if (Storage::disk('public')->exists($document->file_path)) {
+            Storage::disk('public')->delete($document->file_path);
+        }
+
+        $document->delete();
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Delete Business Document',
+            'module' => 'Settings',
+            'ip_address' => $request->ip(),
+            'success' => true
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    // Business Bank Details
+    public function getBusinessBankDetails()
+    {
+        return response()->json(['success' => true, 'bank_details' => BusinessBankDetail::all()]);
+    }
+
+    public function storeBusinessBankDetail(Request $request)
+    {
+        $data = $request->validate([
+            'bank_name' => 'nullable|string',
+            'account_name' => 'nullable|string',
+            'account_number' => 'nullable|string',
+            'mobile_money_number' => 'nullable|string',
+            'mpesa' => 'nullable|string',
+            'airtel_money' => 'nullable|string',
+            'tigo_pesa' => 'nullable|string',
+            'payment_gateway' => 'nullable|string',
+            'transaction_charges' => 'nullable|string',
+        ]);
+
+        $bankDetail = BusinessBankDetail::create($data);
+
+        return response()->json(['success' => true, 'bank_detail' => $bankDetail]);
+    }
+
+    public function deleteBusinessBankDetail($id)
+    {
+        BusinessBankDetail::findOrFail($id)->delete();
+        return response()->json(['success' => true]);
+    }
+
+    // Business Leaders
+    public function getBusinessLeaders()
+    {
+        return response()->json(['success' => true, 'leaders' => BusinessLeader::all()]);
+    }
+
+    public function storeBusinessLeader(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string',
+            'role' => 'required|string',
+            'phone' => 'nullable|string',
+            'email' => 'nullable|string',
+            'official_contact' => 'nullable|string',
+        ]);
+
+        $leader = BusinessLeader::create($data);
+
+        return response()->json(['success' => true, 'leader' => $leader]);
+    }
+
+    public function deleteBusinessLeader($id)
+    {
+        BusinessLeader::findOrFail($id)->delete();
+        return response()->json(['success' => true]);
+    }
+
+    public function uploadBusinessLogo(Request $request)
+    {
+        $request->validate([
+            'logo' => 'required|image|max:5120' // 5MB max
+        ]);
+
+        $file = $request->file('logo');
+        $path = $file->store('business-logos', 'public');
+        
+        // Save the path in system settings
+        SystemSetting::set('logo', $path, 'business-profile');
+
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'Upload Business Logo',
+            'module' => 'Settings',
+            'ip_address' => $request->ip(),
+            'success' => true
+        ]);
+
+        return response()->json(['success' => true, 'logo_path' => $path]);
+    }
+
     public function settingsBackup()
     {
         return $this->renderPage('pages.settings.backup', 'settings-backup');
@@ -377,6 +542,16 @@ class DashboardController extends Controller
     public function adminRoles()
     {
         return $this->renderPage('pages.admin.roles', 'admin-roles');
+    }
+
+    public function adminRoleShow($id)
+    {
+        return view('pages.admin.role_show', ['roleId' => $id])->with('activePage', 'admin-roles');
+    }
+
+    public function adminRoleEdit($id)
+    {
+        return view('pages.admin.role_edit', ['roleId' => $id])->with('activePage', 'admin-roles');
     }
 
     public function adminKyc()
